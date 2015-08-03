@@ -22,5 +22,8 @@
   "dependencies": {
     "jquery": "*"
   },
-  "keywords": []
+  "keywords": [],
+  "devDependencies": {
+    "grunt-serve": "^0.1.6"
+  }
 }

@@ -1,0 +1,26 @@
+<!doctype html>
+<html>
+<head>
+	<title>Inline Editor (Medium) Demo</title>
+	<link rel="stylesheet" type="text/css" href="../css/inline-editor.css">
+</head>
+<body>
+	<h1>Inline Editor Demo</h1>
+	<p>Below the line begins the editor. You can edit everything, but be sure it will not get saved :)</p>
+
+	<div id="editor">
+		
+	</div>
+
+
+<script type="text/javascript" src="../node_modules/jquery/dist/jquery.min.js"></script>
+<script type="text/javascript" src="../dist/jquery.inline-editor.js"></script>
+<script type="text/javascript">
+	$(document).ready(function() {
+		$('#editor').inline_editor({
+
+		});
+	});
+</script>
+</body>
+</html>
