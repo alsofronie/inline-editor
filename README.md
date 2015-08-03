@@ -1,8 +1,30 @@
-# inline-editor
-An inline Javascript HTML Editor like Medium
+# Inline Editor
 
-There are some inline editors like Medium and I've rapidly found their limitations.
+A Medium like inline editor
 
-Generally they depend on 3-4 javascript libraries (besides jQuery).
+## Getting Started
+Download the [production version][min] or the [development version][max].
 
--- Coming soon: demo and documentation.
+[min]: https://raw.github.com/alsofronie/inline-editor/master/dist/inline-editor.min.js
+[max]: https://raw.github.com/alsofronie/inline-editor/master/dist/inline-editor.js
+
+In your web page:
+
+```html
+<script src="jquery.js"></script>
+<script src="dist/inline-editor.min.js"></script>
+<script>
+jQuery(function($) {
+  $('.editor').inline_editor(); // "awesome"
+});
+</script>
+```
+
+## Documentation
+_(Coming soon)_
+
+## Examples
+_(Coming soon)_
+
+## Release History
+_(Nothing yet)_
