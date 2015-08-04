@@ -1,8 +1,113 @@
+@import "./inline-editor-frontend.less";
 
-@heading-font: 'Arial','Verdana','sans-serif';
+html, body {
+	min-height:100%;
+	height:100%;
+	margin:0;
+	padding:0;
+}
 
-.inline-editor {
-	h1,h2,h3,h4 {
-		font-family: @heading-font;
+.p-nor {
+	&:empty{
+		&:not(:focus):before {
+    		content:attr(data-text)
+    	}
+		color:#ccc;
+	}
+}
+
+*:focus, *:active {
+	-webkit-outline:none;
+	outline:none;
+}
+
+.arrow_box(@bg-color) {
+	position: fixed;
+	background: @bg-color;
+	z-index:1000;
+	&:after {
+		top: 100%;
+		left: 50%;
+		border: solid transparent;
+		content: " ";
+		height: 0;
+		width: 0;
+		position: absolute;
+		pointer-events: none;
+		border-color: rgba(0, 0, 0, 0);
+		border-top-color: @bg-color;
+		border-width: 8px;
+		margin-left: -8px;	
+	}
+}
+
+.appearance(@value) {
+	-webkit-appearance: @value;
+	   -moz-appearance: @value;
+	     -o-appearance: @value;
+	        appearance: @value;
+}
+
+.border-radius(@value) {
+	-webkit-border-radius: @value;
+	   -moz-border-radius: @value;
+	     -o-border-radius: @value;
+	        border-radius: @value;
+}
+
+#toolbox-panel {
+	.arrow_box(#000);
+	.border-radius(4px);
+	position:absolute;
+	display:block;
+	&.hidden {
+		display:none;
+	}
+	& > ul {
+		list-style-type:none;
+		margin:0 12px;
+		padding:0;
+		display:block;
+		vertical-align: top;
+		& > li {
+			display:inline-block;
+			vertical-align:top;
+			min-width:36px;
+			height:48px;
+			& > button {
+				display:block;
+				min-width:36px;
+				.appearance(none);
+				border:none;
+				background-color:transparent;
+				color:rgba(255,255,255,.5);
+				line-height:44px;
+				text-align:center;
+				font-size:24px;
+				&:hover {
+					color:rgba(255,255,255,.8);
+				}
+				&.tbx-b {
+					font-weight:bold;
+				}
+				&.tbx-i {
+					font-style: italic;
+				}
+				&.tbx-u {
+					text-decoration: underline;
+				}
+				&.tbx-s {
+					text-decoration: line-through;
+				}
+			}
+			&.divider {
+				width:8px;
+				min-width:auto;
+				max-width:8px;
+				margin-left:8px;
+				border-left:1px solid rgba(255,255,255,.35);
+				height:48px;
+			}
+		}
 	}
 }

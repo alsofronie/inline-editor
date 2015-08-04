@@ -60,16 +60,26 @@ module.exports = function(grunt) {
                     optimization: 2,
                     banner: '<%= banner %>\n'
                 },
-                src: 'src/less/<%= pkg.name %>.less',
-                dest: 'dist/css/<%= pkg.name %>.min.css'
+                files: [{
+                        cwd: 'src/less',
+                        expand:true,
+                        src: [ '*.less'],
+                        dest: 'dist/css',
+                        ext: '.min.css'
+                }],
             },
             developement: {
                 options: {
                     compress: false,
                     banner: '<%= banner %>\n'
                 },
-                src: 'src/less/<%= pkg.name %>.less',
-                dest: 'dist/css/<%= pkg.name %>.css'
+                files: [{
+                        cwd: 'src/less',
+                        expand:true,
+                        src: [ '*.less'],
+                        dest: 'dist/css',
+                        ext: '.css'
+                }],
             } 
         },
         watch: {
@@ -79,12 +89,18 @@ module.exports = function(grunt) {
             },
             src: {
                 files: '<%= jshint.src.src %>',
-                tasks: ['jshint:src', 'qunit']
+                tasks: ['jshint:src', 'qunit','concat','uglify']
             },
+            /*
             test: {
                 files: '<%= jshint.test.src %>',
-                tasks: ['jshint:test', 'qunit']
+                tasks: ['jshint:test']
             },
+            */
+            styles: {
+                files: 'src/less/*.less',
+                tasks: ['less']
+            }
         },
         serve: {
             options: {
@@ -105,6 +121,6 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-serve');
 
     // Default task.
-    grunt.registerTask('default', ['jshint', 'qunit', 'clean', 'concat', 'uglify', 'less']);
+    grunt.registerTask('default', ['jshint', /*'qunit',*/ 'clean', 'concat', 'uglify', 'less']);
 
 };

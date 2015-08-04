@@ -1,0 +1,78 @@
+@import url(http://fonts.googleapis.com/css?family=Patua+One|Roboto:300|Roboto+Slab:400,700|PT+Serif:400,700,400italic,700italic);
+
+
+@ied-margin-lg: 30px;
+@ied-margin-md: 20px;
+@ied-margin-sm: 10px;
+
+@ied-column-width:700px;
+
+
+@ied-color:rgba(0,0,0,.8);
+
+
+* {
+	-webkit-font-smoothing: antialiased;
+}
+
+.noselect {
+	-webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.ied-content {
+
+	color:@ied-color;
+	font-size:22px;
+	line-height:1.5;
+
+	position:relative;
+	width:100%;
+	margin:@ied-margin-lg 0;
+
+	& > .ied-article {
+		section.col {
+			width:@ied-column-width;
+			margin:0 auto;	
+		}
+	}
+
+	h1 {
+		font-family: 'Roboto Slab', cursive;
+		font-size:70px;
+		line-height:1;
+	}
+	h2 {
+		font-family: 'Roboto Slab','Lucida Grande';
+		font-size: 60px;
+		line-height:1.2;
+		font-weight:400;
+		b {
+			font-weight:700;
+		}
+	}
+	h3 {
+		font-family: 'PT Serif', cursive;
+		font-size:48px;
+		line-height:1.2;
+		font-weight:400;
+		b {
+			font-weight:700;
+		}
+	}
+
+	h4 {
+		font-family:'Roboto Light';
+		font-weight:300;
+		line-height:1.1;
+	}
+
+	p {
+		font-family:'PT Serif';
+		margin-bottom:@ied-margin-lg;
+	}
+}
