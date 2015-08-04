@@ -24,7 +24,13 @@ In your web page:
 </head>
 <body>
 	...
-	<div id="editor"></div>
+	<div class="ied-content">
+		<div id="editor" class="ied-article">
+			<section class="col">
+				<h1>This is the title</h1>
+			</section>
+		</div>
+	</div>
 	...
 
 	<script src="jquery.js"></script>
