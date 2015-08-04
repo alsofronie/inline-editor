@@ -1,5 +1,5 @@
 @import url(http://fonts.googleapis.com/css?family=Patua+One|Roboto:300|Roboto+Slab:400,700|PT+Serif:400,700,400italic,700italic);
-/*! Inline Editor - v0.1.0 -  * 2015-08-04
+/*! Inline Editor - v0.1.0 -  * 2015-08-05
  * * https://github.com/alsofronie/inline-editor
  * Copyright (c) 2015 Alex Sofronie; * Licensed MIT */
 * {
@@ -57,6 +57,18 @@
   font-family: 'PT Serif';
   margin-bottom: 30px;
 }
+.ied-content .text-left {
+  text-align: left !important;
+}
+.ied-content .text-right {
+  text-align: right !important;
+}
+.ied-content .text-center {
+  text-align: center !important;
+}
+.ied-content .text-justify {
+  text-align: justify !important;
+}
 html,
 body {
   min-height: 100%;
@@ -64,10 +76,10 @@ body {
   margin: 0;
   padding: 0;
 }
-.p-nor:empty {
+.ied-content p:empty {
   color: #ccc;
 }
-.p-nor:empty:not(:focus):before {
+.ied-content p:empty:not(:focus):before {
   content: attr(data-text);
 }
 *:focus,
@@ -152,4 +164,78 @@ body {
   margin-left: 8px;
   border-left: 1px solid rgba(255, 255, 255, 0.35);
   height: 48px;
+}
+#insert-panel {
+  position: absolute;
+  display: block;
+  background-color: #000;
+  height: 50px;
+  min-width: 50px;
+  -webkit-border-radius: 25px;
+  -moz-border-radius: 25px;
+  -o-border-radius: 25px;
+  border-radius: 25px;
+  vertical-align: top;
+}
+#insert-panel > button {
+  display: inline-block;
+  width: 36px;
+  height: 36px;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  -o-appearance: none;
+  appearance: none;
+  margin: 7px;
+  padding: 0;
+  vertical-align: top;
+  border: none;
+  font-size: 16px;
+  line-height: 16px;
+  color: rgba(255, 255, 255, 0.6);
+  background: transparent;
+}
+#insert-panel > button:hover {
+  color: rgba(255, 255, 255, 0.9);
+}
+#insert-panel > ul {
+  margin: 0 10px 0 0;
+  padding: 0;
+  list-style-type: none;
+  display: none;
+}
+#insert-panel > ul > li {
+  display: inline-block;
+}
+#insert-panel > ul > li > button {
+  display: block;
+  min-width: 36px;
+  height: 36px;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  -o-appearance: none;
+  appearance: none;
+  margin: 7px;
+  padding: 0;
+  vertical-align: top;
+  border: none;
+  font-size: 16px;
+  line-height: 16px;
+  color: rgba(255, 255, 255, 0.6);
+  background: transparent;
+}
+#insert-panel > ul > li > button:hover {
+  color: rgba(255, 255, 255, 0.9);
+}
+#insert-panel.active > button {
+  -webkit-transform: rotate(45deg);
+  /* Safari */
+  -ms-transform: rotate(45deg);
+  /* IE 9 */
+  transform: rotate(45deg);
+}
+#insert-panel.active ul {
+  display: inline-block;
+}
+#insert-panel.hidden {
+  display: none;
 }

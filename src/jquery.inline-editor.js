@@ -19,7 +19,8 @@
             textEmpty: 'Add your text here',
             titleEmpty: 'Add your title here',
             toolbox: {
-                selection: [ 'bold','italic','underline','strikethrough','|','h','|','left','center','right','justify']
+                selection: [ 'bold','italic','underline','strikethrough','|','h','|','left','center','right','justify'],
+                insert: ['image','video','embed','s1','s2','s3','s4','s5','s6']
             }
         };
 
@@ -56,10 +57,30 @@
             var that = this;
 
             // ON CLICK TO HIDE TOOLBOX
-            document.body.onclick = function() {
+            document.body.onclick = function(event) {
                 if(document.getSelection().isCollapsed) {
                     that.hideToolbox(that);
-                } 
+                }
+
+                if(event.target && event.target.parentNode && event.target.parentNode.id && event.target.parentNode.id === 'insert-panel') {
+                    // we clicked the insert panel
+                    var cls = event.target.parentNode.className;
+                    if(!cls) {
+                        cls = 'active';
+                    } else if(cls.indexOf('active') >= 0) {
+                        cls = cls.replace(/active/gi,'');
+                        cls = cls.trim();
+                    } else {
+                        cls = that._addClass(cls, 'active');
+                    }
+                    event.target.parentNode.className = cls;
+
+                } else {
+                    var pe = that.getSelectionParentElement();
+                    if(!pe || !pe.firstChild || !pe.firstChild.innerHTML) {
+                        that.hideInsertToolbox(that);
+                    }
+                }
             };
 
             // ON KEY TO HIDE TOOLBOX
@@ -67,35 +88,29 @@
                 that.hideToolbox(that);
             };
 
-            // ON ENTER
-            this.$e.on('keypress', function(event) {
-                if(event.keyCode !== 13) {
-                    return true;
-                }
-
-                var parentEl = that.getSelectionParentElement();
-                var newSection = that.createNewSection(that.settings);
-
-                if(parentEl.nextSibling) {
-                    parentEl.parentNode.insertBefore(newSection.fragment, parentEl.nextSibling);
+            // CREATE NEW SECTION ON ENTER
+            this.$e.on('keydown.ied.kup', function(event) {
+                if(event.keyCode === 13) {
+                    that.createNewSection(that);
+                    return false;
                 } else {
-                    parentEl.appendNode(newSection.fragment);
+                    that.hideInsertToolbox(that);
                 }
-
-                var range,selection;
-
-                range = document.createRange();             //Create a range (a range is a like the selection but invisible)
-                range.selectNodeContents(newSection.para);  //Select the entire contents of the element with the range
-                range.collapse(true);                      //collapse the range to the end point. false means collapse to end rather than the start
-                selection = window.getSelection();          //get the selection object (allows you to change selection)
-                selection.removeAllRanges();                //remove any selections already made
-                selection.addRange(range);                  //make the range you have just created the visible selection
-
-                return false;
             });
 
-            // ON SELECT
-            this.$e.off('selectstart').on('selectstart', 'section > *', function() {
+            this.$e.on('keyup.ied.kup', function(event) {
+                if(event.keyCode === 8 || event.keyCode === 46) {
+                    that.verifyEmptyElement(that);
+                }
+            });
+
+            this.$e.on('click.ied.clk', 'section > p:empty', function(event) {
+                that._stopPropagation(event);
+                that.getInsertToolbox(that,this);
+            });
+
+            // SHOW SELECT TBX ON SELECT
+            this.$e.on('selectstart', function() {
                 $(document).one('mouseup', function() {
                     var selection = this.getSelection();
 
@@ -103,20 +118,35 @@
                         that.hideToolbox(that);
                     } else {
                         that.currentSelection = selection;
-                        that.setCurrents(selection);
+                        that.setCurrents(that);
                         that.getToolbox(that);
                     }
                 });
             });
-
         },
         currentSelection:null,
         currentParentElement:null,
         currentSection:null,
         tbxSelection:null,
+        tbxInsert:null,
+        verifyEmptyElement:function(that) {
+            
+            var pe = that.getSelectionParentElement();
+            var node = pe.children[0];
+            var htm = node.innerHTML.trim().toLowerCase();
+            if(htm === '<br>' || htm === '<br/>' || htm === '<br />') {
+                node.innerHTML = null;
+                node.className = '';
+            }
+        },
         hideToolbox: function(that) {
             if(that.tbxSelection !== null) {
                 that.tbxSelection.className = 'hidden';
+            }
+        },
+        hideInsertToolbox: function(that) {
+            if(that.tbxInsert !== null) {
+                that.tbxInsert.className = 'hidden';
             }
         },
         getToolbox:function(that) {
@@ -172,7 +202,6 @@
             var range = that.currentSelection.getRangeAt(0).cloneRange();
             // range.collapse(true);
             var rect = range.getClientRects()[0];
-            console.info('Rectangle is now: ', rect);
 
             var dims = {
                 width: that.tbxSelection.offsetWidth,
@@ -182,23 +211,89 @@
             that.tbxSelection.style.left = ( rect.left - Math.floor(dims.width / 2) + Math.floor(rect.width / 2)) + 'px';
             that.tbxSelection.style.top = ( rect.top - 3 - dims.height) + 'px';
             
-
             return that.tbxSelection;
 
         },
-        createNewSection:function(settings) {
+        getInsertToolbox: function(that, target) {
+            target = target || null;
+            if(that.tbxInsert === null) {
+                var tbx = document.createElement('div');
+                var btn,icon,li;
+                tbx.id = 'insert-panel';
+                btn = document.createElement('button');
+                btn.appendChild(document.createTextNode('+'));
+                tbx.appendChild(btn);
+                var ul = document.createElement('ul');
+
+                for(var btnIndex in that.settings.toolbox.insert)
+                {
+                    /*jshint loopfunc: true */
+                    var act = that.settings.toolbox.insert[btnIndex];
+
+                    // TODO: replace with icon
+                    icon = document.createTextNode(act.toUpperCase());
+                    btn = document.createElement('button');
+                    li = document.createElement('li');
+
+                    // TODO: make widgets for these, also
+                    btn.dataset.act = act;
+                    btn.click = function(event) {
+                        that._stopPropagation(event);
+                        console.info('We have action on', this.dataset.act);
+                    };
+
+                    btn.appendChild(icon);
+                    li.appendChild(btn);
+                    ul.appendChild(li);
+                }
+
+                tbx.appendChild(ul);
+                document.body.appendChild(tbx);
+                that.tbxInsert = tbx;
+            }
+
+            that.tbxInsert.className = '';
+
+            var rect = target.getBoundingClientRect();
+
+            that.tbxInsert.style.left = (rect.left - 60) + 'px';
+            that.tbxInsert.style.top = (rect.top + 10) + 'px';
+
+
+            return that.tbxInsert;
+        },
+        createNewSection:function(that) {
+            var settings = that.settings;
+
+            var parentEl = that.getSelectionParentElement();
             var docFragment = document.createDocumentFragment();
             var section = document.createElement('section');
             section.className = 'col';
             var p = document.createElement('p');
-            p.className = 'p-nor';
+            // p.className = 'p-nor';
             p.dataset.text = settings.textEmpty;
             section.appendChild(p);
             docFragment.appendChild(section);
-            return {
-                fragment: docFragment,
-                para: p
-            };
+
+            if(parentEl.nextSibling) {
+                parentEl.parentNode.insertBefore(docFragment, parentEl.nextSibling);
+            } else {
+                parentEl.appendNode(docFragment);
+            }
+
+            var range,selection;
+
+
+            range = document.createRange();             //Create a range (a range is a like the selection but invisible)
+            range.selectNodeContents(p);                //Select the entire contents of the element with the range
+            range.collapse(true);                       //collapse the range to the end point. false means collapse to end rather than the start
+            selection = window.getSelection();          //get the selection object (allows you to change selection)
+            selection.removeAllRanges();                //remove any selections already made
+            selection.addRange(range);                  //make the range you have just created the visible selection
+
+            that.getInsertToolbox(that,p);
+
+            return false;
         },
         getSelectionParentElement: function() {
             var parentEl = null, sel;
@@ -213,16 +308,22 @@
             } else if ( (sel = document.selection) && sel.type !== "Control") {
                 parentEl = sel.createRange().parentElement();
             }
-            if(parentEl !== null) {
-                while(parentEl.nodeName.toLowerCase() !== 'section') {
-                    parentEl = parentEl.parentNode;
-                }
+            while(parentEl && parentEl.nodeName && parentEl.nodeName.toLowerCase() !== 'section') {
+                parentEl = parentEl.parentNode;
             }
             
             return parentEl;
         },
-        setCurrents: function() {
-
+        setCurrents: function(that) {
+            var pe = that.getSelectionParentElement();
+            that.currentSection = pe;
+            if(pe != null && pe.children && pe.children.length > 0)  {
+                that.currentParentElement = pe.children[0];
+            } else {
+                // this should never happen...
+                that.currentParentElement = null;
+                console.error('Cannot find parent element');
+            }
         },
         _stopPropagation: function(event) {
             event = event || window.event;
@@ -232,6 +333,24 @@
             // retarded IE
             event.cancelBubble = true;
         },
+        _clearTextAlign:function(cls) {
+            if(!cls) {
+                return '';
+            }
+            return cls.replace('/text-[a-z]+/gi','');
+        },
+        _addClass:function(cls, newClassName) {
+            cls = cls.trim();
+            cls = (cls.length > 0 ? ' ' : '') + newClassName;
+            return cls;
+        },
+        _tagIs: function(tag, match) {
+            if(match === tag.tagName.toLowerCase()) {
+                return true;
+            } else {
+                return false;
+            }
+        },
         toolboxWidgets: {
             'bold': function(runContext) {
                 if(!runContext) {
@@ -240,7 +359,7 @@
                         wrap: 'b'
                     };
                 } else {
-                    console.info('Run BOLD on ', runContext);
+                    document.execCommand('bold',false,true);
                 }
             },
             'italic': function(runContext) {
@@ -250,7 +369,7 @@
                         wrap: 'i'
                     };
                 } else {
-                    console.info('Run ITALIC on ', runContext);
+                    document.execCommand('italic',false,true);
                 }  
             },
             'underline': function(runContext) {
@@ -260,7 +379,7 @@
                         wrap: 'u'
                     };
                 } else {
-                    console.info('Run UNDERLINE on ', runContext);
+                    document.execCommand('underline',false,true);
                 }
             },
             'strikethrough': function(runContext) {
@@ -270,7 +389,7 @@
                         wrap:'s'
                     };
                 } else {
-                    console.info('Run STRIKE on ', runContext);
+                    document.execCommand('strikeThrough',false,true);
                 }
             },
             'left':function(runContext) {
@@ -279,7 +398,15 @@
                         text: 'L'
                     };
                 } else {
-                    console.info('Run LEFT on ', runContext);
+                    var pe = this.currentParentElement;
+                    if(pe) {
+                        var cls = pe.className;
+                        cls = this._clearTextAlign(cls);
+                        cls = this._addClass(cls, 'text-left');
+                        pe.className = cls;
+                    } else {
+                        console.info('pe is empty? ', this);
+                    }
                 }
             },
             'right':function(runContext) {
@@ -288,7 +415,15 @@
                         text: 'R'
                     };
                 } else {
-                    console.info('Run RIGHT on ', runContext);
+                    var pe = this.currentParentElement;
+                    if(pe) {
+                        var cls = pe.className;
+                        cls = this._clearTextAlign(cls);
+                        cls = this._addClass(cls, 'text-right');
+                        pe.className = cls;
+                    } else {
+                        console.info('pe is empty? ', this);
+                    }
                 }
             },
             'justify':function(runContext) {
@@ -297,7 +432,15 @@
                         text: 'J'
                     };
                 } else {
-                    console.info('Run justify on ', runContext);
+                    var pe = this.currentParentElement;
+                    if(pe) {
+                        var cls = pe.className;
+                        cls = this._clearTextAlign(cls);
+                        cls = this._addClass(cls, 'text-justify');
+                        pe.className = cls;
+                    } else {
+                        console.info('pe is empty? ', this);
+                    }
                 }
             },
             'center':function(runContext) {
@@ -306,7 +449,15 @@
                         text: 'C'
                     };
                 } else {
-                    console.info('Run CENTER on ', runContext);
+                    var pe = this.currentParentElement;
+                    if(pe) {
+                        var cls = pe.className;
+                        cls = this._clearTextAlign(cls);
+                        cls = this._addClass(cls, 'text-center');
+                        pe.className = cls;
+                    } else {
+                        console.info('pe is empty? ', this);
+                    }
                 }
             },
             'h': function(runContext) {
@@ -316,7 +467,57 @@
                         wrap: 'b'
                     };
                 } else {
-                    console.info('Cycle through Headlines');
+                    var pe = this.currentParentElement;
+                    if(pe) {
+                        var newpe = 'h1';
+                        if(this._tagIs(pe, 'h1')) {
+                            newpe = 'h2';
+                        } else if(this._tagIs(pe,'h2')) {
+                            newpe = 'h3';
+                        } else if(this._tagIs(pe,'h3')) {
+                            newpe = 'h4';
+                        } else if(this._tagIs(pe,'h4')) {
+                            newpe = 'h5';
+                        } else if(this._tagIs(pe,'h5')) {
+                            newpe = 'h6';
+                        } else if(this._tagIs(pe,'h6')) {
+                            newpe = 'p';
+                        }
+
+                        // var sel = this.currentSelection;
+                        // var range = sel.getRangeAt(0).cloneRange();
+
+                        var newEl = document.createElement(newpe);
+                        if(pe.className) {
+                            newEl.className = pe.className;
+                        }
+                        while(pe.firstChild) {
+                            newEl.appendChild(pe.firstChild);
+                        }
+
+                        pe.parentNode.insertBefore(newEl, pe);
+                        pe.parentNode.removeChild(pe);
+
+                        var newRange = document.createRange();
+                        newRange.selectNodeContents(newEl);
+
+                        var sel = window.getSelection();
+                        sel.removeAllRanges();
+                        sel.addRange(newRange);
+
+                        this.currentSelection = sel;
+                        this.currentParentElement = newEl;
+
+                        // just to reposition the toolbox
+                        this.getToolbox(this);
+
+                        // pe.outerHtml = '<' + newpe + ' class="' + (pe.className ? pe.className : '') + '">' + pe.innerHtml + '</' + newpe + '>';
+
+                        // var newElement = document.createElement(newpe);
+                        // if(pe.className) newElement.className = pe.className;
+                            
+
+                    }
                 }
             }
 
