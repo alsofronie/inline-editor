@@ -7,12 +7,12 @@ At a minimum, you must download the javascript file ([production version][minjs]
 and the css styles for preview ([production version][mincssp] or the [development version][maxcssp]) and the
 editor css style ([production version][mincsse] or the [development version][maxcsse]).
 
-[minjs]: https://raw.github.com/alsofronie/inline-editor/blob/master/dist/inline-editor.min.js
-[maxjs]: https://raw.github.com/alsofronie/inline-editor/blob/master/dist/inline-editor.js
-[mincssp]: https://raw.github.com/alsofronie/inline-editor/blob/master/dist/css/inline-frontend.min.css
-[maxcssp]: https://raw.github.com/alsofronie/inline-editor/blob/master/dist/css/inline-frontend.css
-[mincsse]: https://raw.github.com/alsofronie/inline-editor/blob/master/dist/css/inline-editor-frontend.min.css
-[maxcsse]: https://raw.github.com/alsofronie/inline-editor/blob/master/dist/css/inline-editor-frontend.css
+[minjs]: https://raw.githubusercontent.com/alsofronie/inline-editor/master/dist/inline-editor.min.js
+[maxjs]: https://raw.githubusercontent.com/alsofronie/inline-editor/master/dist/inline-editor.js
+[mincssp]: https://raw.githubusercontent.com/alsofronie/inline-editor/master/dist/css/inline-frontend.min.css
+[maxcssp]: https://raw.githubusercontent.com/alsofronie/inline-editor/master/dist/css/inline-frontend.css
+[mincsse]: https://raw.githubusercontent.com/alsofronie/inline-editor/master/dist/css/inline-editor-frontend.min.css
+[maxcsse]: https://raw.githubusercontent.com/alsofronie/inline-editor/master/dist/css/inline-editor-frontend.css
 
 In your web page:
 
