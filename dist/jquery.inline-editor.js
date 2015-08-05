@@ -23,7 +23,11 @@
             titleEmpty: 'Add your title here',
             toolbox: {
                 selection: [ 'bold','italic','underline','strikethrough','|','h','|','left','center','right','justify'],
-                insert: ['image','video','embed','s1','s2','s3','s4','s5','s6']
+                insert: ['image','video','embed','section']
+            },
+            imageUpload: {
+                name: 'userfile',
+                events: {}
             }
         };
 
@@ -61,29 +65,12 @@
 
             // ON CLICK TO HIDE TOOLBOX
             document.body.onclick = function(event) {
+                // hide the selection toolbox if no selection
                 if(document.getSelection().isCollapsed) {
                     that.hideToolbox(that);
                 }
-
-                if(event.target && event.target.parentNode && event.target.parentNode.id && event.target.parentNode.id === 'insert-panel') {
-                    // we clicked the insert panel
-                    var cls = event.target.parentNode.className;
-                    if(!cls) {
-                        cls = 'active';
-                    } else if(cls.indexOf('active') >= 0) {
-                        cls = cls.replace(/active/gi,'');
-                        cls = cls.trim();
-                    } else {
-                        cls = that._addClass(cls, 'active');
-                    }
-                    event.target.parentNode.className = cls;
-
-                } else {
-                    var pe = that.getSelectionParentElement();
-                    if(!pe || !pe.firstChild || !pe.firstChild.innerHTML) {
-                        that.hideInsertToolbox(that);
-                    }
-                }
+                console.info('click on docment');
+                that.processInsertToolboxClick(that, event.target);
             };
 
             // ON KEY TO HIDE TOOLBOX
@@ -109,7 +96,8 @@
 
             this.$e.on('click.ied.clk', 'section > p:empty', function(event) {
                 that._stopPropagation(event);
-                that.getInsertToolbox(that,this);
+                console.info('click.ied.clk');
+                that.getInsertToolbox(that,event.target);
             });
 
             // SHOW SELECT TBX ON SELECT
@@ -130,8 +118,29 @@
         currentSelection:null,
         currentParentElement:null,
         currentSection:null,
+        currentInsertTarget: null,
         tbxSelection:null,
         tbxInsert:null,
+        processInsertToolboxClick: function(that, target) {
+
+            var ipanel = document.getElementById('insert-panel');
+            if(!ipanel) {
+                return true;
+            }
+
+            if(ipanel.contains(target)) {
+                if(target.parentNode === ipanel) {
+                    // we clicked the insert panel PLUS button
+                    that._toggleClass(target.parentNode,'active');    
+                }
+            } else {
+                var pe = that.getSelectionParentElement();
+                if(!pe || !pe.firstChild || !pe.firstChild.innerHTML) {
+                    // we clicked outside the empty paragraph
+                    that.hideInsertToolbox(that);
+                }
+            }
+        },
         verifyEmptyElement:function(that) {
             
             var pe = that.getSelectionParentElement();
@@ -218,7 +227,6 @@
 
         },
         getInsertToolbox: function(that, target) {
-            target = target || null;
             if(that.tbxInsert === null) {
                 var tbx = document.createElement('div');
                 var btn,icon,li;
@@ -233,21 +241,26 @@
                     /*jshint loopfunc: true */
                     var act = that.settings.toolbox.insert[btnIndex];
 
-                    // TODO: replace with icon
-                    icon = document.createTextNode(act.toUpperCase());
-                    btn = document.createElement('button');
-                    li = document.createElement('li');
+                    if(typeof that.toolboxInsertWidgets[act] === 'function') {
+                        var e = that.toolboxInsertWidgets[act]();
 
-                    // TODO: make widgets for these, also
-                    btn.dataset.act = act;
-                    btn.click = function(event) {
-                        that._stopPropagation(event);
-                        console.info('We have action on', this.dataset.act);
-                    };
+                        // TODO: replace with icon
+                        icon = document.createTextNode(e.text);
+                        btn = document.createElement('button');
+                        li = document.createElement('li');
 
-                    btn.appendChild(icon);
-                    li.appendChild(btn);
-                    ul.appendChild(li);
+                        // TODO: make widgets for these, also
+                        btn.dataset.act = act;
+                        btn.onclick = function(event) {
+                            that._stopPropagation(event);   
+                            var b = event.target.dataset.act;
+                            that.toolboxInsertWidgets[b].call(that,true);
+                        };
+
+                        btn.appendChild(icon);
+                        li.appendChild(btn);
+                        ul.appendChild(li);
+                    }
                 }
 
                 tbx.appendChild(ul);
@@ -260,8 +273,9 @@
             var rect = target.getBoundingClientRect();
 
             that.tbxInsert.style.left = (rect.left - 60) + 'px';
-            that.tbxInsert.style.top = (rect.top + 10) + 'px';
+            that.tbxInsert.style.top = (rect.top - 10) + 'px';
 
+            that.currentInsertTarget = target;
 
             return that.tbxInsert;
         },
@@ -285,7 +299,6 @@
             }
 
             var range,selection;
-
 
             range = document.createRange();             //Create a range (a range is a like the selection but invisible)
             range.selectNodeContents(p);                //Select the entire contents of the element with the range
@@ -336,16 +349,17 @@
             // retarded IE
             event.cancelBubble = true;
         },
+        _toggleClass: function(el, cls) {
+            el.classList.toggle(cls);
+        },
         _clearTextAlign:function(cls) {
             if(!cls) {
                 return '';
             }
             return cls.replace('/text-[a-z]+/gi','');
         },
-        _addClass:function(cls, newClassName) {
-            cls = cls.trim();
-            cls = (cls.length > 0 ? ' ' : '') + newClassName;
-            return cls;
+        _addClass:function(el, newClassName) {
+            el.classList.addClass(newClassName);
         },
         _tagIs: function(tag, match) {
             if(match === tag.tagName.toLowerCase()) {
@@ -353,6 +367,205 @@
             } else {
                 return false;
             }
+        },
+        html5Upload: function(/*that, el*/) {
+            /*
+            $.fn.html5Uploader = function (options) {
+
+                var crlf = '\r\n';
+                var boundary = "jqhtml5ful";
+                var dashes = "--";
+
+                var settings = {
+                    "name": "userfile",
+                    "postUrl": "upload.php",
+                    "onClientAbort": null,
+                    "onClientError": null,
+                    "onClientLoad": null,
+                    "onClientLoadEnd": null,
+                    "onClientLoadStart": null,
+                    "onClientProgress": null,
+                    "onServerAbort": null,
+                    "onServerError": null,
+                    "onServerLoad": null,
+                    "onServerLoadStart": null,
+                    "onServerProgress": null,
+                    "onServerReadyStateChange": null,
+                    "onSuccess": null,
+                    "onError": null,
+                    "onStartUpload": null,
+                };
+
+                if (options) {
+                    $.extend(settings, options);
+                }
+
+                return this.each(function (options) {
+                    var $this = $(this);
+                    var mul = false;
+                    if ($this.is("[type='file']")) {
+                        if ($this.prop('multiple')) mul = true;
+                        $this
+                            .bind("change", function () {
+                                if(settings.onStartUpload) settings.onStartUpload.apply($this);
+                                var files = this.files;
+                                for (var i = 0; i < files.length; i++) {
+                                    fileHandler(files[i]);
+                                    if (!mul) break;
+                                }
+                            });
+                    } else {
+                        if ($this.data('multiple')) mul = true;
+                        $this
+                            .bind("dragenter dragover", function () {
+                                $(this).addClass("hover");
+                                return false;
+                            })
+                            .bind("dragleave", function () {
+                                $(this).removeClass("hover");
+                                return false;
+                            })
+                            .bind("drop", function (e) {
+                                $(this).removeClass("hover");
+                                if(settings.onStartUpload) settings.onStartUpload.apply($this);
+                                var files = e.originalEvent.dataTransfer.files;
+                                for (var i = 0; i < files.length; i++) {
+                                    fileHandler(files[i]);
+                                    if (!mul) break;
+                                }
+                                return false;
+                            });
+                    }
+                });
+
+                function fileHandler(file) {
+                    var fileReader = new FileReader();
+                    fileReader.onabort = function (e) {
+                        if (settings.onClientAbort) {
+                            settings.onClientAbort(e, file);
+                        }
+                    };
+                    fileReader.onerror = function (e) {
+                        if (settings.onClientError) {
+                            settings.onClientError(e, file);
+                        }
+                    };
+                    fileReader.onload = function (e) {
+                        if (settings.onClientLoad) {
+                            settings.onClientLoad(e, file);
+                        }
+                    };
+                    fileReader.onloadend = function (e) {
+                        if (settings.onClientLoadEnd) {
+                            settings.onClientLoadEnd(e, file);
+                        }
+                    };
+                    fileReader.onloadstart = function (e) {
+                        if (settings.onClientLoadStart) {
+                            settings.onClientLoadStart(e, file);
+                        }
+                    };
+                    fileReader.onprogress = function (e) {
+                        if (settings.onClientProgress) {
+                            settings.onClientProgress(e, file);
+                        }
+                    };
+                    fileReader.readAsDataURL(file);
+
+                    var xmlHttpRequest = new XMLHttpRequest();
+                    if (!xmlHttpRequest.upload) {
+                        console.log('Cannot upload');
+                    } else {
+                        xmlHttpRequest.upload.onabort = function (e) {
+                            if (settings.onServerAbort) {
+                                settings.onServerAbort(e, file);
+                            }
+                        };
+                        xmlHttpRequest.upload.onerror = function (e) {
+                            if (settings.onServerError) {
+                                settings.onServerError(e, file);
+                            }
+                        };
+                        xmlHttpRequest.upload.onload = function (e) {
+                            if (settings.onServerLoad) {
+                                settings.onServerLoad(e, file);
+                            }
+                        };
+                        xmlHttpRequest.upload.onloadstart = function (e) {
+                            if (settings.onServerLoadStart) {
+                                settings.onServerLoadStart(e, file);
+                            }
+                        };
+                        xmlHttpRequest.upload.onprogress = function (e) {
+                            if (settings.onServerProgress) {
+                                settings.onServerProgress(e, file);
+                            }
+                        };
+                    }
+
+                    xmlHttpRequest.onreadystatechange = function (e) {
+                        if (settings.onServerReadyStateChange) {
+                            settings.onServerReadyStateChange(e, file, xmlHttpRequest.readyState);
+                        }
+                        if (settings.onSuccess && xmlHttpRequest.readyState == 4 && xmlHttpRequest.status == 200) {
+                            settings.onSuccess(e, file, xmlHttpRequest.responseText);
+                        }
+                        if(settings.onError && xmlHttpRequest.readyState == 4 && xmlHttpRequest.status != 200) {
+                            settings.onError(e,file,xmlHttpRequest.responseText,xmlHttpRequest.status);
+                        }
+                    };
+
+                    xmlHttpRequest.open("POST", settings.postUrl, true);
+
+                    if (file.getAsBinary) { // Firefox
+
+                        var data = dashes + boundary + crlf +
+                            "Content-Disposition: form-data;" +
+                            "name=\"" + settings.name + "\";" +
+                            "filename=\"" + unescape(encodeURIComponent(file.name)) + "\"" + crlf +
+                            "Content-Type: application/octet-stream" + crlf + crlf +
+                            file.getAsBinary() + crlf +
+                            dashes + boundary + dashes;
+
+                        xmlHttpRequest.setRequestHeader("Content-Type", "multipart/form-data;boundary=" + boundary);
+                        xmlHttpRequest.sendAsBinary(data);
+
+                    } else if (window.FormData) { // Chrome
+
+                        var formData = new FormData();
+                        formData.append(settings.name, file);
+
+                        xmlHttpRequest.send(formData);
+
+                    }
+                }
+
+            };
+            */
+        },
+        _fileHandler: function(that, el, file,fileIndex,fileCount) {
+            var fileReader = new FileReader();
+
+            fileReader.onloadend = function() {
+                var fig = document.createElement('figure');
+                var img = document.createElement('img');
+                img.src = fileReader.result;
+                img.dataset.width = img.width;
+                img.dataset.height = img.height;
+                img.dataset.name = file.name;
+                fig.appendChild(img);
+                fig.appendChild(document.createElement('figcaption'));
+                
+                pe.appendChild(fig);
+            };
+
+            console.info('We got file ' + fileIndex + '/' + fileCount + ': ', file);
+            console.info('File reader: ', fileReader);
+            console.info('Current parent: ', that.currentInsertTarget);
+            var pe = that.currentInsertTarget;
+            pe.dataset.text = 'Please wait...';
+            fileReader.readAsDataURL(file);
+
         },
         toolboxWidgets: {
             'bold': function(runContext) {
@@ -405,8 +618,8 @@
                     if(pe) {
                         var cls = pe.className;
                         cls = this._clearTextAlign(cls);
-                        cls = this._addClass(cls, 'text-left');
                         pe.className = cls;
+                        this._addClass(pe, 'text-left');
                     } else {
                         console.info('pe is empty? ', this);
                     }
@@ -422,7 +635,8 @@
                     if(pe) {
                         var cls = pe.className;
                         cls = this._clearTextAlign(cls);
-                        cls = this._addClass(cls, 'text-right');
+                        pe.className = cls;
+                        this._addClass(pe, 'text-right');
                         pe.className = cls;
                     } else {
                         console.info('pe is empty? ', this);
@@ -439,7 +653,8 @@
                     if(pe) {
                         var cls = pe.className;
                         cls = this._clearTextAlign(cls);
-                        cls = this._addClass(cls, 'text-justify');
+                        pe.className = cls;
+                        this._addClass(pe, 'text-right');
                         pe.className = cls;
                     } else {
                         console.info('pe is empty? ', this);
@@ -456,7 +671,8 @@
                     if(pe) {
                         var cls = pe.className;
                         cls = this._clearTextAlign(cls);
-                        cls = this._addClass(cls, 'text-center');
+                        pe.className = cls;
+                        this._addClass(pe, 'text-right');
                         pe.className = cls;
                     } else {
                         console.info('pe is empty? ', this);
@@ -523,7 +739,69 @@
                     }
                 }
             }
+        },
+        toolboxInsertWidgets: {
+            'image': function(runContext) {
+                if(!runContext) {
+                    console.info('no run context');
+                    return {
+                        text:'IMAGE'
+                    };
+                } else {
 
+                    var that = this;
+                    
+                    var inp = document.createElement('input');
+                    inp.type = 'file';
+                    inp.name = 'userFile';
+                    inp.multiple = "true";
+                    inp.style.position = 'absolute';
+                    inp.style.left = '-9999px';
+                    inp.style.top = '-9999px';
+
+                    inp.onchange = function(event) {
+                        if(that.settings.imageUpload.events.start) {
+                            that.settings.imageUpload.events.start.call(this,that,event);
+                        }
+                        var files = this.files;
+                        for (var i = 0; i < files.length; i++) {
+                            that._fileHandler(that, this, files[i],i,files.length);
+                        }
+                    };
+
+                    document.body.appendChild(inp);
+
+                    inp.focus();
+                    inp.click();
+                }
+            },
+            'video': function(runContext) {
+                if(!runContext) {
+                    return {
+                        text: 'VIDEO'
+                    };
+                } else {
+                    console.info('Clicked on video button');
+                }
+            },
+            'embed': function(runContext) {
+                if(!runContext) {
+                    return {
+                        text: 'EMBED'
+                    };
+                } else {
+                    console.info('Clicked on embed button');
+                }
+            },
+            'section': function(runContext) {
+                if(!runContext) {
+                    return {
+                        text: 'S'
+                    };
+                } else {
+                    console.info('Clicked on new section');
+                }
+            }
         }
     });
 
