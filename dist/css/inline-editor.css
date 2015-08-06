@@ -1,5 +1,5 @@
 @import url(http://fonts.googleapis.com/css?family=Patua+One|Roboto:300|Roboto+Slab:400,700|PT+Serif:400,700,400italic,700italic);
-/*! Inline Editor - v0.1.0 -  * 2015-08-05
+/*! Inline Editor - v0.1.0 -  * 2015-08-06
  * * https://github.com/alsofronie/inline-editor
  * Copyright (c) 2015 Alex Sofronie; * Licensed MIT */
 * {
@@ -69,6 +69,37 @@
 .ied-content .text-justify {
   text-align: justify !important;
 }
+figure {
+  position: relative;
+}
+figure figcaption {
+  position: absolute;
+  left: -172px;
+  width: 150px;
+  top: 0;
+  text-align: right;
+  margin-top: 0;
+  padding-top: 10px;
+  font-weight: 400;
+  font-style: italic;
+  font-size: 14px;
+  line-height: 1.4;
+  color: rgba(0, 0, 0, 0.6);
+  outline: 0;
+}
+figure figcaption:after {
+  position: absolute;
+  width: 25%;
+  margin-left: 75%;
+  border-top: 1px solid rgba(0, 0, 0, 0.15);
+  display: block;
+  content: '';
+  top: 0;
+}
+figure img {
+  max-width: 100%;
+  height: auto;
+}
 html,
 body {
   min-height: 100%;
@@ -76,10 +107,12 @@ body {
   margin: 0;
   padding: 0;
 }
-.ied-content p:empty {
+.ied-content p:empty,
+.ied-content figcaption:empty {
   color: #ccc;
 }
-.ied-content p:empty:not(:focus):before {
+.ied-content p:empty:not(:focus):before,
+.ied-content figcaption:empty:not(:focus):before {
   content: attr(data-text);
 }
 *:focus,

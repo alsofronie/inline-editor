@@ -68,6 +68,7 @@
                 }
                 console.info('click on docment');
                 that.processInsertToolboxClick(that, event.target);
+                // that.processImageClick(that,event.target);
             };
 
             // ON KEY TO HIDE TOOLBOX
@@ -102,12 +103,23 @@
                 $(document).one('mouseup', function() {
                     var selection = this.getSelection();
 
+                    console.info('we have a selection');
+
                     if(selection.isCollapsed) {
+                        console.info('selection collapsed, hiding toolbox');
                         that.hideToolbox(that);
                     } else {
+                        console.info('selection is not collapsed');
                         that.currentSelection = selection;
                         that.setCurrents(that);
-                        that.getToolbox(that);
+                        console.info('current parent node: ', that.currentSelection.parentNode);
+                        var node = that.currentSelection.parentNode;
+                        if(that._tagIs(node,'figcaption')) {
+                            console.info('selection is inside a figcaption, we do not show...');
+                        } else {
+                            console.info('selection is legit, we show the toolbix');
+                            that.getToolbox(that);
+                        }
                     }
                 });
             });
@@ -118,6 +130,25 @@
         currentInsertTarget: null,
         tbxSelection:null,
         tbxInsert:null,
+        processImageClick:function(that, target) {
+            // on every click, we deselect all images
+            // because the image select is on non-editable and
+            // we need to style it in order to show selection
+
+            var selImgs = document.getElementsByClassName('img-active');
+            // this can be only one :)
+            for(var i=0;i<selImgs.length;i++) {
+                var img = selImgs[i];
+                img.className = '';
+            }
+
+            if(that._tagIs(target,'img')) {
+                console.info('clicked on image');
+                target.className = 'img-active';
+            } else {
+                console.info('the click is not on an image');
+            }
+        },
         processInsertToolboxClick: function(that, target) {
 
             var ipanel = document.getElementById('insert-panel');
@@ -139,11 +170,20 @@
             }
         },
         verifyEmptyElement:function(that) {
-            
+            // the pe is always the section
             var pe = that.getSelectionParentElement();
+            // the node could be a paragraph or a figure
             var node = pe.children[0];
+            if(that._tagIs(node,'figure')) {
+                // we need to check the figcaption not the figure
+                // maybe we have more than one image?
+                // the figcaption is always the last child
+                node = node.lastChild;
+            }
             var htm = node.innerHTML.trim().toLowerCase();
-            if(htm === '<br>' || htm === '<br/>' || htm === '<br />') {
+            console.info('the node is ', node);
+            console.info('the node html is',htm);
+            if(htm === '<br>' || htm === '<br/>' || htm === '<br />' || htm === '&nbsp;') {
                 node.innerHTML = null;
                 node.className = '';
             }
@@ -359,6 +399,10 @@
             el.classList.addClass(newClassName);
         },
         _tagIs: function(tag, match) {
+            console.info('matching against ' + match + ' the tag ', tag);
+            if(!tag || tag === null || tag === undefined) {
+                return false;
+            }
             if(match === tag.tagName.toLowerCase()) {
                 return true;
             } else {
@@ -545,15 +589,23 @@
 
             fileReader.onloadend = function() {
                 var fig = document.createElement('figure');
+                fig.setAttribute('contenteditable','false');
                 var img = document.createElement('img');
                 img.src = fileReader.result;
                 img.dataset.width = img.width;
                 img.dataset.height = img.height;
                 img.dataset.name = file.name;
                 fig.appendChild(img);
-                fig.appendChild(document.createElement('figcaption'));
+                var cap = document.createElement('figcaption');
+                cap.dataset.text = 'Write a caption...';
+                cap.setAttribute('contenteditable', 'true');
+                fig.appendChild(cap);
                 
-                pe.appendChild(fig);
+                // pe.appendChild(fig);
+
+                el.parentNode.removeChild(el);
+                pe.parentNode.insertBefore(fig, pe);
+                pe.parentNode.removeChild(pe);
             };
 
             console.info('We got file ' + fileIndex + '/' + fileCount + ': ', file);
@@ -762,7 +814,7 @@
                         }
                         var files = this.files;
                         for (var i = 0; i < files.length; i++) {
-                            that._fileHandler(that, this, files[i],i,files.length);
+                            that._fileHandler(that, inp, files[i],i,files.length);
                         }
                     };
 
