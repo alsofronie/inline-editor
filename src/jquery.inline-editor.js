@@ -19,8 +19,9 @@
             textEmpty: 'Add your text here',
             titleEmpty: 'Add your title here',
             toolbox: {
-                selection: [ 'bold','italic','underline','strikethrough','|','h','|','left','center','right','justify'],
-                insert: ['image','video','embed','section']
+                selection: [ 'bold','italic','underline','strikethrough','|','h','p','|','align'],
+                insert: ['image','video','embed','section'],
+                image: ['normal','left','right','full']
             },
             imageUpload: {
                 name: 'userfile',
@@ -62,13 +63,14 @@
 
             // ON CLICK TO HIDE TOOLBOX
             document.body.onclick = function(event) {
+                console.info('click on docment');
                 // hide the selection toolbox if no selection
                 if(document.getSelection().isCollapsed) {
                     that.hideToolbox(that);
                 }
-                console.info('click on docment');
+                
                 that.processInsertToolboxClick(that, event.target);
-                // that.processImageClick(that,event.target);
+                that.processImageClick(that,event.target);
             };
 
             // ON KEY TO HIDE TOOLBOX
@@ -128,8 +130,10 @@
         currentParentElement:null,
         currentSection:null,
         currentInsertTarget: null,
+        currentImageTarget:null,
         tbxSelection:null,
         tbxInsert:null,
+        tbxImage:null,
         processImageClick:function(that, target) {
             // on every click, we deselect all images
             // because the image select is on non-editable and
@@ -145,9 +149,15 @@
             if(that._tagIs(target,'img')) {
                 console.info('clicked on image');
                 target.className = 'img-active';
+
+                that.getImageToolbox(that,target);
+                that._selectNone(that);
+
             } else {
-                console.info('the click is not on an image');
+                that.hideImageToolbox(that);
             }
+
+            return false;
         },
         processInsertToolboxClick: function(that, target) {
 
@@ -198,6 +208,11 @@
                 that.tbxInsert.className = 'hidden';
             }
         },
+        hideImageToolbox: function(that) {
+            if(that.tbxImage !== null) {
+                that.tbxImage.className = 'hidden';
+            }
+        },
         getToolbox:function(that) {
             if(that.tbxSelection === null) {
                 var tbx = document.createElement('div');
@@ -220,10 +235,14 @@
                         var w = document.createElement('button');
                         w.dataset.act = btn;
 
+                        console.info('W is ', w);
+
                         w.onclick = function(event) {
                             that._stopPropagation(event);
+                            console.info('event target is ', event.srcElement);
                             var el = ( event.srcElement || event.target );
                             var b = el.dataset.act;
+                            console.info('Calling on ', b);
                             that.toolboxWidgets[b].call(that,true);
                         };
 
@@ -263,6 +282,7 @@
             return that.tbxSelection;
 
         },
+
         getInsertToolbox: function(that, target) {
             if(that.tbxInsert === null) {
                 var tbx = document.createElement('div');
@@ -315,6 +335,71 @@
             that.currentInsertTarget = target;
 
             return that.tbxInsert;
+        },
+        getImageToolbox: function(that, target) {
+            if(that.tbxImage === null) {
+                var tbx = document.createElement('div');
+                tbx.id = 'image-panel';
+                var ul = document.createElement('ul');
+                tbx.appendChild(ul);
+
+                for(var btnIndex in that.settings.toolbox.image) {
+                    /*jshint loopfunc: true */
+                    var btn = that.settings.toolbox.image[btnIndex];
+                    if(btn === '|') {
+                        var divider = document.createElement('li');
+                        divider.className = 'divider';
+                        ul.appendChild(divider);
+                        continue;
+                    }
+                    if(typeof that.toolboxImageWidgets[btn] === 'function') {
+                        var e = that.toolboxImageWidgets[btn]();
+                        var li = document.createElement('li');
+                        var w = document.createElement('button');
+                        w.dataset.act = btn;
+
+                        w.onclick = function(event) {
+                            that._stopPropagation(event);
+                            var el = ( event.srcElement || event.target );
+                            var b = el.dataset.act;
+                            that.toolboxImageWidgets[b].call(that,true);
+                        };
+
+                        if(e.wrap !== undefined) {
+                            w.className = 'tbx tbx-' + e.wrap;
+                        }
+                        if(e.text !== undefined) {
+                            w.appendChild(document.createTextNode(e.text));
+                        }
+                        if(e.icon !== undefined) {
+                            var icn = document.createElement('i');
+                            icn.className = 'icon icon-' + e.icon;
+                            w.appendChild(icn);
+                        }
+                        li.appendChild(w);
+                        ul.appendChild(li);
+                    }
+                }
+                document.body.appendChild(tbx);
+                that.tbxImage = tbx;
+            }
+
+            that.currentImageTarget = target;
+
+            that.tbxImage.className = '';
+
+            var rect = that.currentImageTarget.getBoundingClientRect();
+
+            var dims = {
+                width: that.tbxImage.offsetWidth,
+                height: that.tbxImage.offsetHeight
+            };
+
+            that.tbxImage.style.left = ( rect.left - Math.floor(dims.width / 2) + Math.floor(rect.width / 2)) + 'px';
+            that.tbxImage.style.top = ( rect.top - 3 - dims.height) + 'px';
+            
+            return that.tbxSelection;
+
         },
         createNewSection:function(that) {
             var settings = that.settings;
@@ -389,14 +474,19 @@
         _toggleClass: function(el, cls) {
             el.classList.toggle(cls);
         },
-        _clearTextAlign:function(cls) {
-            if(!cls) {
+        _removeClasses:function(el, pattern) {
+            if(!pattern) {
                 return '';
             }
-            return cls.replace('/text-[a-z]+/gi','');
+            var classes = el.className;
+            var re = new RegExp(pattern,'g');
+            classes = classes.replace(re,'');
+            el.className = classes.replace(/ +(?= )/g,''); // str = str.replace(/ +(?= )/g,'');
+            return classes;
         },
         _addClass:function(el, newClassName) {
-            el.classList.addClass(newClassName);
+            console.info('Adding class ' + newClassName + ' to ', el);
+            el.classList.add(newClassName);
         },
         _tagIs: function(tag, match) {
             console.info('matching against ' + match + ' the tag ', tag);
@@ -407,6 +497,13 @@
                 return true;
             } else {
                 return false;
+            }
+        },
+        _selectNone: function(that, keepToolbox) {
+            var sel = window.getSelection();
+            sel.removeAllRanges();
+            if(keepToolbox !== true) {
+                that.hideToolbox(that);
             }
         },
         html5Upload: function(/*that, el*/) {
@@ -620,8 +717,7 @@
             'bold': function(runContext) {
                 if(!runContext) {
                     return {
-                        text: 'B',
-                        wrap: 'b'
+                        icon:'bold'
                     };
                 } else {
                     document.execCommand('bold',false,true);
@@ -630,8 +726,7 @@
             'italic': function(runContext) {
                 if(!runContext) {
                     return {
-                        text: 'I',
-                        wrap: 'i'
+                        icon:'italic'
                     };
                 } else {
                     document.execCommand('italic',false,true);
@@ -640,8 +735,7 @@
             'underline': function(runContext) {
                 if(!runContext) {
                     return {
-                        text: 'U',
-                        wrap: 'u'
+                        icon:'underline'
                     };
                 } else {
                     document.execCommand('underline',false,true);
@@ -650,13 +744,25 @@
             'strikethrough': function(runContext) {
                 if(!runContext) {
                     return {
-                        text: 'S',
-                        wrap:'s'
+                        icon:'strike'
                     };
                 } else {
                     document.execCommand('strikeThrough',false,true);
                 }
             },
+            'align': function(runContext) {
+                if(!runContext) {
+                    return {
+                        icon: 'align'
+                    };
+                } else {
+                    var pe = this.currentParentElement;
+                    if(pe) {
+                        console.info('The class list is ', pe.classList);
+                    }
+                }
+            },
+            /*
             'left':function(runContext) {
                 if(!runContext) {
                     return {
@@ -665,9 +771,7 @@
                 } else {
                     var pe = this.currentParentElement;
                     if(pe) {
-                        var cls = pe.className;
-                        cls = this._clearTextAlign(cls);
-                        pe.className = cls;
+                        this._removeClasses(pe, '^text-');
                         this._addClass(pe, 'text-left');
                     } else {
                         console.info('pe is empty? ', this);
@@ -682,11 +786,8 @@
                 } else {
                     var pe = this.currentParentElement;
                     if(pe) {
-                        var cls = pe.className;
-                        cls = this._clearTextAlign(cls);
-                        pe.className = cls;
+                        this._removeClasses(pe, '^text-');
                         this._addClass(pe, 'text-right');
-                        pe.className = cls;
                     } else {
                         console.info('pe is empty? ', this);
                     }
@@ -700,11 +801,8 @@
                 } else {
                     var pe = this.currentParentElement;
                     if(pe) {
-                        var cls = pe.className;
-                        cls = this._clearTextAlign(cls);
-                        pe.className = cls;
-                        this._addClass(pe, 'text-right');
-                        pe.className = cls;
+                        this._removeClasses(pe, '^text-');
+                        this._addClass(pe, 'text-justify');
                     } else {
                         console.info('pe is empty? ', this);
                     }
@@ -718,16 +816,14 @@
                 } else {
                     var pe = this.currentParentElement;
                     if(pe) {
-                        var cls = pe.className;
-                        cls = this._clearTextAlign(cls);
-                        pe.className = cls;
-                        this._addClass(pe, 'text-right');
-                        pe.className = cls;
+                        this._removeClasses(pe, '^text-');
+                        this._addClass(pe, 'text-center');
                     } else {
                         console.info('pe is empty? ', this);
                     }
                 }
             },
+            */
             'h': function(runContext) {
                 if(!runContext) {
                     return {
@@ -849,6 +945,44 @@
                     };
                 } else {
                     console.info('Clicked on new section');
+                }
+            }
+        },
+        toolboxImageWidgets: {
+            'normal': function(runContext) {
+                if(!runContext) {
+                    return {
+                        text: 'N'
+                    };
+                } else {
+                    console.info('Normal image class');
+                }
+            },
+            'left': function(runContext) {
+                if(!runContext) {
+                    return {
+                        text: 'L'
+                    };
+                } else {
+                    console.info('Left align');
+                }
+            },
+            'right': function(runContext) {
+                if(!runContext) {
+                    return {
+                        text: 'R'
+                    };
+                } else {
+                    console.info('Right align');
+                }
+            },
+            'full': function(runContext) {
+                if(!runContext) {
+                    return {
+                        text: 'F'
+                    };
+                } else {
+                    console.info('Full width');
                 }
             }
         }

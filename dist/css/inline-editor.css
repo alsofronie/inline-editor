@@ -1,5 +1,5 @@
 @import url(http://fonts.googleapis.com/css?family=Patua+One|Roboto:300|Roboto+Slab:400,700|PT+Serif:400,700,400italic,700italic);
-/*! Inline Editor - v0.1.0 -  * 2015-08-06
+/*! Inline Editor - v0.1.0 -  * 2015-08-11
  * * https://github.com/alsofronie/inline-editor
  * Copyright (c) 2015 Alex Sofronie; * Licensed MIT */
 * {
@@ -100,6 +100,88 @@ figure img {
   max-width: 100%;
   height: auto;
 }
+.text-left {
+  text-align: left;
+}
+.text-right {
+  text-align: right;
+}
+.text-center {
+  text-align: center;
+}
+.text-justify {
+  text-align: justify;
+}
+@font-face {
+  font-family: 'icomoon';
+  src: url('../fonts/icomoon.eot?-23q4no');
+  src: url('../fonts/icomoon.eot?#iefix-23q4no') format('embedded-opentype'), url('../fonts/icomoon.ttf?-23q4no') format('truetype'), url('../fonts/icomoon.woff?-23q4no') format('woff'), url('../fonts/icomoon.svg?-23q4no#icomoon') format('svg');
+  font-weight: normal;
+  font-style: normal;
+}
+.icon {
+  font-family: 'icomoon';
+  speak: none;
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+  /* Better Font Rendering =========== */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+.icon-align:before {
+  content: "\e01e";
+}
+.icon-bold:before {
+  content: "\e0d2";
+}
+.icon-italic:before {
+  content: "\e0d9";
+}
+.icon-block:before {
+  content: "\e0de";
+}
+.icon-underline:before {
+  content: "\e0e3";
+}
+.icon-image:before {
+  content: "\e0eb";
+}
+.icon-strike:before {
+  content: "\e0f1";
+}
+.icon-link:before {
+  content: "\e0f7";
+}
+.icon-image-small:before {
+  content: "\e151";
+}
+.icon-image-big:before {
+  content: "\e152";
+}
+.icon-image-size:before {
+  content: "\e1c3";
+}
+.icon-ok:before {
+  content: "\e206";
+}
+.icon-close:before {
+  content: "\e209";
+}
+.icon-hr:before {
+  content: "\e20f";
+}
+.icon-video:before {
+  content: "\e23e";
+}
+.icon-embed:before {
+  content: "\e284";
+}
+.icon-section:before {
+  content: "\e2d7";
+}
 html,
 body {
   min-height: 100%;
@@ -120,7 +202,8 @@ body {
   -webkit-outline: none;
   outline: none;
 }
-#toolbox-panel {
+#toolbox-panel,
+#image-panel {
   position: fixed;
   background: #000000;
   z-index: 1000;
@@ -131,7 +214,8 @@ body {
   position: absolute;
   display: block;
 }
-#toolbox-panel:after {
+#toolbox-panel:after,
+#image-panel:after {
   top: 100%;
   left: 50%;
   border: solid transparent;
@@ -145,23 +229,27 @@ body {
   border-width: 8px;
   margin-left: -8px;
 }
-#toolbox-panel.hidden {
+#toolbox-panel.hidden,
+#image-panel.hidden {
   display: none;
 }
-#toolbox-panel > ul {
+#toolbox-panel > ul,
+#image-panel > ul {
   list-style-type: none;
   margin: 0 12px;
   padding: 0;
   display: block;
   vertical-align: top;
 }
-#toolbox-panel > ul > li {
+#toolbox-panel > ul > li,
+#image-panel > ul > li {
   display: inline-block;
   vertical-align: top;
   min-width: 36px;
   height: 48px;
 }
-#toolbox-panel > ul > li > button {
+#toolbox-panel > ul > li > button,
+#image-panel > ul > li > button {
   display: block;
   min-width: 36px;
   -webkit-appearance: none;
@@ -175,22 +263,28 @@ body {
   text-align: center;
   font-size: 24px;
 }
-#toolbox-panel > ul > li > button:hover {
+#toolbox-panel > ul > li > button:hover,
+#image-panel > ul > li > button:hover {
   color: rgba(255, 255, 255, 0.8);
 }
-#toolbox-panel > ul > li > button.tbx-b {
+#toolbox-panel > ul > li > button.tbx-b,
+#image-panel > ul > li > button.tbx-b {
   font-weight: bold;
 }
-#toolbox-panel > ul > li > button.tbx-i {
+#toolbox-panel > ul > li > button.tbx-i,
+#image-panel > ul > li > button.tbx-i {
   font-style: italic;
 }
-#toolbox-panel > ul > li > button.tbx-u {
+#toolbox-panel > ul > li > button.tbx-u,
+#image-panel > ul > li > button.tbx-u {
   text-decoration: underline;
 }
-#toolbox-panel > ul > li > button.tbx-s {
+#toolbox-panel > ul > li > button.tbx-s,
+#image-panel > ul > li > button.tbx-s {
   text-decoration: line-through;
 }
-#toolbox-panel > ul > li.divider {
+#toolbox-panel > ul > li.divider,
+#image-panel > ul > li.divider {
   width: 8px;
   min-width: auto;
   max-width: 8px;
@@ -271,4 +365,10 @@ body {
 }
 #insert-panel.hidden {
   display: none;
+}
+img.img-active {
+  -webkit-box-shadow: 0px 0px 3px 3px #058ef7;
+  -moz-box-shadow: 0px 0px 3px 3px #058ef7;
+  -o-box-shadow: 0px 0px 3px 3px #058ef7;
+  box-shadow: 0px 0px 3px 3px #058ef7;
 }
