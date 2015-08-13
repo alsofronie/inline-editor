@@ -26,6 +26,10 @@ module.exports = function(grunt) {
                 src: ['src/jquery.<%= pkg.name %>.js'],
                 dest: 'dist/jquery.<%= pkg.name %>.js'
             },
+            nojquery: {
+                src: ['src/js/*.js'],
+                dest: 'dist/<%= pkg.name %>.js'
+            }
         },
         uglify: {
             options: {
@@ -35,6 +39,10 @@ module.exports = function(grunt) {
                 src: '<%= concat.dist.dest %>',
                 dest: 'dist/jquery.<%= pkg.name %>.min.js'
             },
+            nojquery: {
+                src: '<%= concat.nojquery.dest %>',
+                dest: 'dist/<%= pkg.name %>.min.js'
+            }
         },
         qunit: {
             files: ['test/**/*.html']

@@ -18,12 +18,13 @@
 
 
 <script type="text/javascript" src="../node_modules/jquery/dist/jquery.min.js"></script>
-<script type="text/javascript" src="../dist/jquery.inline-editor.js"></script>
+<script type="text/javascript" src="../dist/inline-editor.js"></script>
 <script type="text/javascript">
-	$(document).ready(function() {
-		$('#editor').inline_editor({
+	document.addEventListener('DOMContentLoaded', function () {
+    	// Our hawaiian greeting is displayed as soon as the page loads,
+    	var element = document.getElementById('editor');
+    	var editor = new InlineEditor(element);
 
-		});
 	});
 </script>
 </body>
