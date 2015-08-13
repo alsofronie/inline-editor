@@ -238,8 +238,7 @@
                         console.info('W is ', w);
 
                         w.onclick = function(event) {
-                            that._stopPropagation(event);
-                            console.info('event target is ', event.srcElement);
+                            console.info('event target is now ', event.srcElement);
                             var el = ( event.srcElement || event.target );
                             var b = el.dataset.act;
                             console.info('Calling on ', b);

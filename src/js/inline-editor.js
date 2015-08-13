@@ -5,7 +5,9 @@
 ;(function(w,d,undefined) {
 	"use strict";
 
-	// Default options
+	// ================ INTERNAL VARIABLES =================
+
+	// PRIVATE VAR: Default options
 	var _defaults = {
 		lang: {
 			text: 'Add your text here',
@@ -18,10 +20,15 @@
 		}
 	};
 
-	// The toolboxes
+	// PRIVATE VAR: Default toolboxes definition
+	// The widget functions will be called with runContext false to get the toolbox element
+	// and with runContext = true (this will point to the plugin instance)
+	
 	var _toolboxes = {
 		selection: {
 			current: null,
+			name: 'selection',
+			id: 'seltbx-pane',
 			widgets: {
 				bold: function(runContext) {
 					if(!runContext) {
@@ -32,7 +39,7 @@
 				},
 				italic: function(runContext) {
 					if(!runContext) {
-						return { icon: 'bold' };
+						return { icon: 'italic' };
 					} else {
 						document.execCommand('italic',false,true);
 					}	
@@ -57,7 +64,18 @@
 					if(!runContext) {
 						return { icon: 'align' };
 					} else {
-						console.info('We run align in context ', runContext);
+						if(_node.hasClass(this.sel,'text-center')) {
+							_node.removeClass(this.sel,'text-center');
+							_node.addClass(this.sel,'text-right');
+						} else if(_node.hasClass(this.sel,'text-right')) {
+							_node.removeClass(this.sel,'text-right');
+							_node.addClass(this.sel,'text-justify');
+						} else if(_node.hasClass(this.sel,'text-justify')) {
+							_node.removeClass(this.sel,'text-justify');
+							// css defaults to text-left so no need to add that class here.
+						} else {
+							_node.addClass(this.sel,'text-center');
+						}
 					}
 				},
 				p: function(runContext) {
@@ -65,6 +83,10 @@
 						return { icon: 'para' };
 					} else {
 						console.info('We need to change the current parent element to a paragraph');
+						if(!_node.is(this.sel,'p')) {
+							var newEl = _node.change(this.sel, 'p', false);
+							_node.select(newEl);
+						}
 					}
 				},
 				h: function(runContext) {
@@ -72,11 +94,39 @@
 						return { icon: 'heading' };
 					} else {
 						console.info('We need to change the current parent elment to a heading');
+						var destName = 'h1';
+						if(_node.is(this.sel,'h1')) {
+							destName = 'h2';
+						} else if(_node.is(this.sel,'h2')) {
+							destName = 'h3';
+						} else if(_node.is(this.sel,'h3')) {
+							destName = 'h4';
+						} else if(_node.is(this.sel,'h4')) {
+							destName = 'h5';
+						} else if(_node.is(this.sel,'h5')) {
+							destName = 'h6';
+						}
+
+						var newEl = _node.change(this.sel, destName, true);
+						_node.select(newEl);
 					}
 				}
 			}
 		}
 	};
+
+	// ============== END INTERNAL VARIABLES ===============
+
+
+	// ============== INTERNAL FUNCTIONS ===================
+
+
+	// ============== END INTERNAL FUNCTIONS ===============
+
+	// ================ MAIN PLUGIN -- PUBLIC ==============
+
+	// =============== END MAIN PLUGIN =====================
+	
 
 	w.InlineEditor = function() {
 
@@ -101,32 +151,38 @@
 			this.src = arguments[0];
 			this.settings = _extend(_defaults, arguments[1]);
 		}
-
 		// =============== END INIT VARIABLES ==================
 
-		var plugin = this;
-
+		// prepare the editor
 		// add the class
 		this.src.classList.add('ied-article');
 		// put content editable
-		_attr(this.src,'contenteditable','true');
+		_node.attr(this.src,'contenteditable','true');
 
-		// ============ EVENT FUNCTIONS ====================
-		// selection change event
+		// private internal functions
+		var plugin = this;	// all the following functions will use the plugin variable.
+		// Events
+
+		// event for the selection
+		// this will fire only on document, not on the actual editor
 		function eventSelectionChange(event) {
 			event = event ? event : w.event;
-			// we cannot cancel or sop bubbling this, it's on document
-			// _stop(event);
-			// because we stop the event, we need to call
-			// _setselection to update the sel and the sec
-			_setSelection(plugin);
-			console.info('Parent element: ', plugin.sel);
-			console.info('Section element: ', plugin.sec);
+			plugin.setSelection();
+			var sel = plugin.getSelection();
+			if(sel.isCollapsed) {
+				plugin.hideToolbox(_toolboxes.selection);
+			} else {
+				plugin.showToolbox(_toolboxes.selection);
+			}
 		}
+
+		document.addEventListener('selectionchange', eventSelectionChange);
+
+		// event for the Enter/Return key (creating a new section)
 		// keydown (verify for enter)
 		function eventKeyDown(event) {
 			event = event ? event : w.event;
-			_setSelection(plugin);
+			plugin.setSelection();
 			if(event.keyCode === 13) {
 				_stop(event, true);
 				if(event.shiftKey === true) {
@@ -138,7 +194,7 @@
 				            range = sel.getRangeAt(0);
 				            range.deleteContents();
 				            range.collapse(false);
-				            br = document.createElement('br');
+				            br = _node.create('br');
 				            range.insertNode( br );
 				            range = range.cloneRange();
 				            range.selectNode(br);
@@ -159,23 +215,18 @@
 				console.info('need to hide the toolboxes');
 			}
 		}
+		this.src.addEventListener('keydown', eventKeyDown);
+		
+
 		// keyup event (verify for delete)
+		// event for the Delete key (test if element is empty)
 		function eventKeyUp(event) {
 			event = event ? event : w.event;
-			_setSelection(plugin);
+			plugin.setSelection();
 			if(event.keyCode === 8 || event.keyCode === 46) {
-                _verifyEmptyElement(plugin);
+                plugin.verifyEmptyElement();
             }
 		}
-
-		// event for the selection
-		// this will fire only on document, not on the actual editor
-		document.addEventListener('selectionchange', eventSelectionChange);
-
-		// event for the Enter/Return key (creating a new section)
-		this.src.addEventListener('keydown', eventKeyDown);
-
-		// event for the Delete key (test if element is empty)
 		this.src.addEventListener('keyup', eventKeyUp);
 
 
@@ -186,6 +237,18 @@
 			}
 		};
 
+		this.getSelection = function() {
+			if(window.getSelection) {
+				return window.getSelection();
+			} else {
+				var sel = document.selection;
+				if(sel && sel.type !== 'Control') {
+					return sel;
+				}
+			}
+			return null;
+		};
+
 		this.createNewSection = function() {
 
             var section = document.createElement('section');
@@ -194,7 +257,6 @@
             // p.className = 'p-nor';
             p.dataset.text = this.settings.lang.text;
             section.appendChild(p);
-
 
             if(this.sec.nextSibling) {
                 this.sec.parentNode.insertBefore(section, this.sec.nextSibling);
@@ -211,24 +273,140 @@
             selection.removeAllRanges();                //remove any selections already made
             selection.addRange(range);                  //make the range you have just created the visible selection
 
-            _setSelection(this);
+            this.setSelection();
 
             // that.getInsertToolbox(that,p);
 
             return false;
 		};
 
-		this.showToolboxSelection = function() {
-			return _createToolbox(_toolboxes.selection);
+		this.showToolbox = function(tbx) {
+			if(tbx.current === null) {
+	    		var pane = _node.create('div');
+	    		pane.id = tbx.id;
+	    		var ul = _node.create('ul');
+	    		pane.appendChild(ul);
+	    		var widgets = tbx.widgets;
+	    		var settings = this.settings.toolboxes[tbx.name];
+	    		
+	    		for( var btnIndex in settings ) {
+	        		// jshint loopfunc: true
+	        		var bName = settings[btnIndex];
+	        		if(bName === '|') {
+	            		var divider = _node.create('li','divider');
+                    	ul.appendChild(divider);
+                    	continue;
+                	}
+                	
+                	if(!widgets[bName]) {
+                		// we do not know this one
+                		console.error('We do not know how to handle ', bName);
+                		continue;
+                	}
+                	
+                	var appearance = widgets[bName](false);
+                	var li = _node.create('li');
+                	var btn = _node.create('button');
+                	btn.dataset.act = bName;
+
+                	if(appearance.icon !== undefined) {
+	                	var icn = _node.create('i', 'icon icon-' + appearance.icon);
+	                	btn.appendChild(icn);
+	                } else if(appearance.text !== undefined) {
+	                	btn.appendChild(document.createTextNode(appearance.text));
+	                }
+
+                	var p = this;
+	                btn.addEventListener('click', function(event) {
+	                    // _stop(event,true);
+	                    console.info('event target is  now', event.srcElement);
+	                    var el = ( event.srcElement || event.target );
+	                    while(!_node.is(el,'button')) {
+	                    	el = el.parentNode;
+	                    } 
+	                    var b = el.dataset.act;
+	                    widgets[b].call(p,true);
+	                });
+
+	                
+
+                	li.appendChild(btn);
+                	ul.appendChild(li);
+            	}
+
+            	document.body.appendChild(pane);
+            	tbx.current = pane;
+        	}
+
+        	tbx.current.className = '';	// just to be sure it's not 'hidden'
+
+        	var sel,range,rect,dims;
+
+        	sel = this.getSelection();
+        	range = sel.getRangeAt(0).cloneRange();
+        	rect = range.getClientRects()[0];
+
+        	dims = {
+            	width: tbx.current.offsetWidth,
+            	height: tbx.current.offsetHeight
+        	};
+
+        	tbx.current.style.left = ( rect.left - Math.floor(dims.width / 2) + Math.floor(rect.width / 2)) + 'px';
+        	tbx.current.style.top = ( rect.top - 3 - dims.height) + 'px';
+        
+        	return tbx.current;
 		};
 
-		this.hideToolboxSelection = function() {
-			if(_toolboxes.selection.current !== null) {
-				_toolboxes.selection.current.className = 'hidden';
+		this.hideToolbox = function(tbx) {
+			if(tbx.current !== null) {
+				tbx.current.className = 'hidden';
 				return true;
 			}
 			return false;
 		};
+
+		this.setSelection = function() {
+
+			var sel = this.getSelection();
+			var parentEl = null, parentSe = null;
+
+			parentEl = sel.getRangeAt(0).commonAncestorContainer;
+            if (parentEl.nodeType !== 1) {
+                parentEl = parentEl.parentNode;
+            }
+
+	        parentSe = parentEl;
+	        while(parentSe && parentSe.nodeName && parentSe.nodeName.toLowerCase() !== 'section') {
+	            parentSe = parentSe.parentNode;
+	        }
+
+	        this.sel = parentEl;
+	        this.sec = parentSe;
+		};
+
+		this.verifyEmptyElement = function() {
+			// the pe is always the section
+        	var pe = this.sel;
+        	console.info('Verify empty on parent', pe);
+        	// the node could be a paragraph or a figure
+        	var node = pe;
+        	console.info('We need to check the node ', node);
+
+        	if(_node.is(node,'figure')) {
+        		// we need to check the figcaption not the figure
+	            // maybe we have more than one image?
+	            // the figcaption is always the last child
+	            node = node.lastChild;	
+        	}
+       
+        	var htm = node.innerHTML.trim().toLowerCase();
+        	console.info('html is ', htm);
+	        if(htm === '<br>' || htm === '<br/>' || htm === '<br />' || htm === '&nbsp;' || htm === '') {
+	            node.innerHTML = null;
+	            node.className = '';
+	        }
+		};
+		
 	};
 
 	// ================ UTILITY PRIVATE FUNCTIONS =======================
@@ -249,25 +427,8 @@
 		return source;
 	}
 
-	// add element attribute
-	function _attr(element, attribute, value) {
-		element.setAttribute(attribute, value);
-	}
-
-	function _tagIs(tag, tagName) {
-
-		if(!tag || tag === null || tag === undefined) {
-            return false;
-        }
-        tagName = tagName.toLowerCase();
-        if(tagName === tag.tagName.toLowerCase()) {
-            return true;
-        } else {
-            return false;
-        }
-	}
-
-	// stop event propagation
+	// stop the propagation of the event and 
+	// optionally prevents the default
 	function _stop(event, preventDefault) {
 		event = event || w.event;
 		if(event.stopPropagation) {
@@ -281,129 +442,78 @@
         }
 	}
 
-	// This will determine the section and the element being edited at that moment
-	function _setSelection(plugin) {
-		var parentEl = null, parentSe = null, sel;
-        if (window.getSelection) {
-            sel = window.getSelection();
-            if (sel.rangeCount) {
-                parentEl = sel.getRangeAt(0).commonAncestorContainer;
-                if (parentEl.nodeType !== 1) {
-                    parentEl = parentEl.parentNode;
-                }
+	// just some node operations (DOM)
+	var _node = {
+		create: function(name, className) {
+			var node = document.createElement(name);
+			if(className !== undefined) {
+				node.className = className;
+			}
+			return node;
+		},
+		attr: function(node, name, value) {
+			node.setAttribute(name, value);
+		},
+		is: function(node, name) {
+			if(!node || node === null || node === undefined) {
+	            return false;
+	        }
+	        name = name.toLowerCase();
+	        return (name === node.tagName.toLowerCase());
+		},
+		change: function(src, destName, preserveClasses) {
+			console.info('Changing to ' + destName + ' node ', src);
+			var newClassName = '';
+			if(preserveClasses) {
+				newClassName = src.className;
+			}
+
+			var newEl = _node.create(destName);
+			newEl.className = newClassName;
+            while(src.firstChild) {
+                newEl.appendChild(src.firstChild);
             }
-        } else if ( (sel = document.selection) && sel.type !== "Control") {
-            parentEl = sel.createRange().parentElement();
-        }
 
-        parentSe = parentEl;
-        while(parentSe && parentSe.nodeName && parentSe.nodeName.toLowerCase() !== 'section') {
-            parentSe = parentSe.parentNode;
-        }
+            src.parentNode.insertBefore(newEl, src);
+            src.parentNode.removeChild(src);
+            return newEl;
+		},
+		select: function(node) {
+			var newRange = document.createRange();
+            newRange.selectNodeContents(node);
+            // TODO: call a common function
+            var sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(newRange);
+		},
+		hasClass: function(node, className) {
+			return node.classList.contains(className);
+		},
+		addClass: function(node, newClass) {
+			node.classList.add(newClass);
+		},
+		removeClass: function(node, className) {
+			node.classList.remove(className);
+		},
+		toggleClass: function(node, className) {
+			node.classList.toggle(className);
+		}
+	};
 
-        plugin.sel = parentEl;
-        plugin.sec = parentSe;
-        
-	}
 
 	// this will determine if the element currently edited is empty and make it accordingly
 	// (remove the br or empty text nodes)
-	function _verifyEmptyElement(plugin) {
-		// the pe is always the section
-        var pe = plugin.sel;
-        console.info('Verify empty on parent', pe);
-        // the node could be a paragraph or a figure
-        var node = pe;
-        console.info('We need to check the node ', node);
-        
-        if(_tagIs(node,'figure')) {
-            // we need to check the figcaption not the figure
-            // maybe we have more than one image?
-            // the figcaption is always the last child
-            node = node.lastChild;
-        }
-        var htm = node.innerHTML.trim().toLowerCase();
-        console.info('html is ', htm);
-        if(htm === '<br>' || htm === '<br/>' || htm === '<br />' || htm === '&nbsp;' || htm === '') {
-            node.innerHTML = null;
-            node.className = '';
-        }
-	}
+	/*
 
 	// this will create the appropriate toolbox and display it
-	function _createToolbox(plugin, tbxObject, wrapperId, settings) {
-		if(tbxObject.current === null) {
-            var tbx = document.createElement('div');
-            tbx.id = wrapperId;
-            var ul = document.createElement('ul');
-            tbx.appendChild(ul);
-
-            var widgets = tbxObject.widgets;
-
-            for(var btnIndex in settings) {
-                /* jshint loopfunc: true */
-                var btn = settings[btnIndex];
-                if(btn === '|') {
-                    var divider = document.createElement('li');
-                    divider.className = 'divider';
-                    ul.appendChild(divider);
-                    continue;
-                }
-                if(!widgets[btn]) {
-                	// we do not know this one
-                	console.error('We do not know how to handle ', btn);
-                	continue;
-                }
-                var e = widgets[btn](false);
-                var li = document.createElement('li');
-                var w = document.createElement('button');
-                w.dataset.act = btn;
-                console.info('W is ', w);
-
-                w.onclick = function(event) {
-                    _stop(event);
-                    console.info('event target is ', event.srcElement);
-                    var el = ( event.srcElement || event.target );
-                    var b = el.dataset.act;
-                    console.info('Calling on ', b);
-                    widgets[btn].call(plugin,true);
-                };
-
-                if(e.icon !== undefined) {
-                	var icn = document.createElement('i');
-                	icn.className = 'icon icon-' + e.icon;
-                	w.appendChild(w);
-                } else if(e.text !== undefined) {
-                	w.appendChild(document.createTextNode(e.text));
-                }
-
-                li.appendChild(w);
-                ul.appendChild(li);
-
-
-            }
-
-            document.body.appendChild(tbx);
-            tbxObject.current = tbx;
-        }
-
-        tbxObject.current.className = '';
-
-        var sel = window.getSelection();
-
-        var range = sel.getRangeAt(0).cloneRange();
-        var rect = range.getClientRects()[0];
-
-        var dims = {
-            width: sel.offsetWidth,
-            height: sel.offsetHeight
-        };
-
-        tbxObject.current.style.left = ( rect.left - Math.floor(dims.width / 2) + Math.floor(rect.width / 2)) + 'px';
-        tbxObject.current.style.top = ( rect.top - 3 - dims.height) + 'px';
-        
-        return tbxObject.current;
+	function _showToolbox(plugin, tbxObject, wrapperId) {
+		
 	}
+
+	function _hideToolbox(plugin, wrapperId) {
+
+	}
+	*/
 	// ================== END UTILITY PRIVATE FUNCTIONS =======================
 
 

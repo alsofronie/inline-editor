@@ -1,4 +1,4 @@
-/*! Inline Editor - v0.1.0 -  * 2015-08-13
+/*! Inline Editor - v0.1.0 -  * 2015-08-14
  * * https://github.com/alsofronie/inline-editor
  * Copyright (c) 2015 Alex Sofronie; * Licensed MIT */ 
 // the semi-colon before function invocation is a safety net against concatenated
@@ -241,8 +241,7 @@
                         console.info('W is ', w);
 
                         w.onclick = function(event) {
-                            that._stopPropagation(event);
-                            console.info('event target is ', event.srcElement);
+                            console.info('event target is now ', event.srcElement);
                             var el = ( event.srcElement || event.target );
                             var b = el.dataset.act;
                             console.info('Calling on ', b);
