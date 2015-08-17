@@ -11,7 +11,7 @@
 @ied-color:rgba(0,0,0,.8);
 
 
-* {
+body,td,input,select {
 	-webkit-font-smoothing: antialiased;
 }
 
@@ -35,9 +35,22 @@
 	margin:@ied-margin-lg 0;
 
 	& > .ied-article {
+		
 		section.col {
 			width:@ied-column-width;
-			margin:0 auto;	
+			margin:0 auto;
+
+			& > figure > img {
+				padding-bottom:attr(data-dratio);
+			}
+
+			&.wide {
+				width:(@ied-column-width + 120);
+			}
+
+			&.full {
+				width:100%;
+			}
 		}
 	}
 
@@ -92,6 +105,9 @@
 
 figure {
 	position:relative;
+	margin:0;
+	padding:0;
+	max-width:100%;
 	figcaption {
 		position:absolute;
 		left: -172px;
@@ -120,6 +136,26 @@ figure {
 	img {
 		max-width:100%;
 		height:auto;
+	}
+}
+
+section.wide, section.full {
+
+	figure {
+		figcaption {
+			position:relative;
+			left:auto;
+			width:auto;
+			top:auto;
+			text-align:center;
+			&:after {
+				border:none;
+			}
+		}
+		img {
+			width:100%;
+			height:auto;
+		}
 	}
 }
 

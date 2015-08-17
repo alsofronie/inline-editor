@@ -1,4 +1,4 @@
-/*! Inline Editor - v0.1.0 -  * 2015-08-14
+/*! Inline Editor - v0.1.0 -  * 2015-08-17
  * * https://github.com/alsofronie/inline-editor
  * Copyright (c) 2015 Alex Sofronie; * Licensed MIT */ 
 // the semi-colon before function invocation is a safety net against concatenated

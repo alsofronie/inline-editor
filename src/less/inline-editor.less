@@ -71,8 +71,22 @@ html, body {
 	        box-shadow: @shadow;
 }
 
-#seltbx-pane, #image-panel {
-	.arrow_box(#000);
+.rotate(@deg) {
+	-webkit-transform: rotate(@deg); /* Safari */
+	    -ms-transform: rotate(@deg); /* IE 9 */
+    	    transform: rotate(@deg);
+}
+
+#seltbx-pane, #instbx-pane, #imgtbx-pane {
+
+	&#seltbx-pane, &#imgtbx-pane {
+		.arrow_box(#000);	
+	}
+
+	&#instbx-pane {
+		background-color:#000;
+	}
+	
 	.border-radius(4px);
 	position:absolute;
 	display:block;
@@ -126,9 +140,33 @@ html, body {
 			}
 		}
 	}
+
+	&#instbx-pane {
+		&>ul {
+			&>li {
+				display:none;
+				&:first-child {
+					display:inline-block;
+					.rotate(45deg);
+				}
+			}
+		}
+		&.expanded {
+			&>ul {
+				&>li {
+					display:inline-block;
+					&:first-child {
+						.rotate(0deg);
+					}
+				}
+			}
+		}
+	}
 }
 
-#insert-panel {
+
+/*
+#instbx-pane {
 	position:absolute;
 	display:block;
 	background-color:#000;
@@ -136,24 +174,6 @@ html, body {
 	min-width:50px;
 	.border-radius(25px);
 	vertical-align:top;
-
-	& > button {
-		display:inline-block;
-		width:36px;
-		height:36px;
-		.appearance(none);
-		margin:7px;
-		padding:0;
-		vertical-align:top;
-		border:none;
-		font-size:16px;
-		line-height:16px;
-		color:rgba(255,255,255,.6);
-		background:transparent;
-		&:hover {
-			color:rgba(255,255,255,.9);
-		}
-	}
 
 	& > ul {
 		margin:0 10px 0 0;
@@ -195,6 +215,7 @@ html, body {
 		display:none;
 	}
 }
+*/
 
 img.img-active {
 	.box-shadow(0px 0px 3px 3px rgba(5,142,247,1));

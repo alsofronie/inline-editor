@@ -15,8 +15,8 @@
 		},
 		toolboxes: {
 			selection: [ 'bold','italic','underline','strikethrough','|','h','p','|','align'],
-			insert: ['image','video','embed','section'],
-        	image: ['normal','left','right','full']
+			insert: ['plus', 'image','video','embed','section'],
+        	image: ['pos','|','sec']
 		}
 	};
 
@@ -29,6 +29,7 @@
 			current: null,
 			name: 'selection',
 			id: 'seltbx-pane',
+			position: 'top',
 			widgets: {
 				bold: function(runContext) {
 					if(!runContext) {
@@ -76,15 +77,18 @@
 						} else {
 							_node.addClass(this.sel,'text-center');
 						}
+						_node.normalize(this.sel);
+						_node.select(this.sel);
+
 					}
 				},
 				p: function(runContext) {
 					if(!runContext) {
 						return { icon: 'para' };
 					} else {
-						console.info('We need to change the current parent element to a paragraph');
 						if(!_node.is(this.sel,'p')) {
 							var newEl = _node.change(this.sel, 'p', false);
+							_node.normalize(newEl);
 							_node.select(newEl);
 						}
 					}
@@ -93,7 +97,7 @@
 					if(!runContext) {
 						return { icon: 'heading' };
 					} else {
-						console.info('We need to change the current parent elment to a heading');
+						console.info('We need to change the current parent elment to a heading', this.sel);
 						var destName = 'h1';
 						if(_node.is(this.sel,'h1')) {
 							destName = 'h2';
@@ -108,7 +112,106 @@
 						}
 
 						var newEl = _node.change(this.sel, destName, true);
+						_node.normalize(newEl);
 						_node.select(newEl);
+					}
+				}
+			}
+		},
+		insert: {
+			current: null,
+			name: 'insert',
+			id: 'instbx-pane',
+			position: 'left',
+			widgets: {
+				plus: function(runContext) {
+					if(!runContext) {
+						return { icon: 'close' };
+					} else {
+						var t = document.getElementById('instbx-pane');
+						_node.toggleClass(t, 'expanded');
+					}
+				},
+				image: function(runContext) {
+					if(!runContext) {
+						return { icon: 'image' };
+					} else {
+						var that = this;
+
+	                    var inp = document.createElement('input');
+	                    
+	                    inp.type = 'file';
+	                    inp.name = 'userFile';
+	                    inp.multiple = "true";
+	                    inp.style.position = 'absolute';
+	                    inp.style.left = '-9999px';
+	                    inp.style.top = '-9999px';
+
+	                    inp.onchange = function() {
+	                        var files = this.files;
+	                        for (var i = 0; i < files.length; i++) {
+	                            that.uploadFile(files[i],i,files.length);
+	                        }
+	                    };
+
+	                    document.body.appendChild(inp);
+
+	                    inp.focus();
+	                    inp.click();
+					}
+				},
+				video: function(runContext) {
+					if(!runContext) {
+						return { icon: 'video' };
+					} else {
+						console.info('Clicked on INSERT VIDEO');
+					}
+				},
+				embed: function(runContext) {
+					if(!runContext) {
+						return { icon: 'embed' };
+					} else {
+						console.info('Clicked on INSERT EMBED');
+					}
+				},
+				section: function(runContext) {
+					if(!runContext) {
+						return { icon: 'hr' };
+					} else {
+						// var oldSel = this.sel;
+						_node.change(this.sel,'hr');
+						this.createNewSection();
+						this.showToolbox(runContext);
+					}
+				}
+			}
+		},
+		image: {
+			current: null,
+			name: 'image',
+			id: 'imgtbx-pane',
+			position: 'top',
+			widgets: {
+				pos: function(runContext) {
+					if(!runContext) {
+						return { icon: 'image-size' };
+					} else {
+						var s = this.sec;
+						if(_node.hasClass(s,'wide')) {
+							_node.removeClass(s,'wide');
+							_node.addClass(s,'full');
+						} else if(_node.hasClass(s,'full')) {
+							_node.removeClass(s,'full');
+						} else {
+							_node.addClass(s,'wide');
+						}
+					}
+				},
+				sec: function(runContext) {
+					if(!runContext) {
+						return { icon: 'image-big' };
+					} else {
+						console.info('Must make the image very big');
 					}
 				}
 			}
@@ -135,6 +238,7 @@
 		
 		this.sel = null;				// the active selection element (paragraph, h1, ... ,h6, figure etc)
 		this.sec = null;				// the active section (the parent)
+		this.img = null;				// the active image
 
 		this.settings = null;			// the settings
 
@@ -167,15 +271,43 @@
 		// this will fire only on document, not on the actual editor
 		function eventSelectionChange(event) {
 			event = event ? event : w.event;
+			
 			plugin.setSelection();
+			plugin.normalize();
+
 			var sel = plugin.getSelection();
+			if(sel.rangeCount === 0) {
+				return false;
+			}
+			var pe = sel.getRangeAt(0).commonAncestorContainer;
+			while(pe !== plugin.src) {
+				if(_node.is(pe,'body') || _node.is(pe,'html')) {
+					plugin.hideToolbox();
+					return true;
+				}
+				pe = pe.parentElement;
+			}
+
 			if(sel.isCollapsed) {
 				plugin.hideToolbox(_toolboxes.selection);
+				if(_node.is(plugin.sel,'p') && !plugin.sel.hasChildNodes()) {
+					plugin.showToolbox(_toolboxes.insert);
+				} else {
+					plugin.hideToolbox(_toolboxes.insert);
+				}
+
 			} else {
+				// There is some selection
+				// show the selection toolbox
 				plugin.showToolbox(_toolboxes.selection);
+				
+				// hide the insert toolbox
+				plugin.hideToolbox(_toolboxes.insert);
+
+				// hide the image toolbox
+				plugin.hideToolbox(_toolboxes.image);
 			}
 		}
-
 		document.addEventListener('selectionchange', eventSelectionChange);
 
 		// event for the Enter/Return key (creating a new section)
@@ -187,7 +319,7 @@
 				_stop(event, true);
 				if(event.shiftKey === true) {
 					// insert element at cursor
-					var sel, range, br;
+					var sel, range, br, spc;
 					if(window.getSelection) {
 						sel = window.getSelection();
 				        if (sel.getRangeAt && sel.rangeCount) {
@@ -195,28 +327,35 @@
 				            range.deleteContents();
 				            range.collapse(false);
 				            br = _node.create('br');
-				            range.insertNode( br );
+				            range.insertNode(br);
 				            range = range.cloneRange();
-				            range.selectNode(br);
-				            range.collapse(false);
+				            range.setStartAfter(br);
+				            range.setEndAfter(br);
+				            spc = _node.createText('*');
+				            range.insertNode(spc);
+				            range.selectNode(spc);
 				            sel.removeAllRanges();
 				            sel.addRange(range);
 
+				            if(spc.nextSibling.nodeValue !== '') {
+				            	sel.deleteFromDocument();
+				            }
 				        }
 					} else if(document.selection && document.selection.createRange) {
 						document.selection.createRange().text = '<br>';
 					}
 				} else {
 					console.info('creating new section: ', event);
-					plugin.createNewSection();	
+					plugin.createNewSection();
+					
 				}
 				
 			} else {
-				console.info('need to hide the toolboxes');
+				console.info('need to hide toolboxes');
+				plugin.hideToolbox(_toolboxes.insert);
 			}
 		}
 		this.src.addEventListener('keydown', eventKeyDown);
-		
 
 		// keyup event (verify for delete)
 		// event for the Delete key (test if element is empty)
@@ -229,6 +368,31 @@
 		}
 		this.src.addEventListener('keyup', eventKeyUp);
 
+
+		// click event (used to select non-editable elements)
+		function eventClick(event) {
+			event = event ? event: w.event;
+
+			var el = event.target;
+			if(_node.is(el,'img') && _node.is(el.parentElement, 'figure')) {
+				_node.addClass(el,'img-active');
+				plugin.selectNone();
+				plugin.hideToolbox(_toolboxes.insert);
+				plugin.hideToolbox(_toolboxes.selection);
+				plugin.img = el;
+				plugin.sec = _node.hasParent(el,'section');
+				plugin.showToolbox(_toolboxes.image);
+			} else {
+				var a = document.getElementsByClassName('img-active');
+				for(var b in a) {
+					if(a[b] && a[b].classList && _node.is(a[b],'img')) {
+						_node.removeClass(a[b],'img-active');
+					}
+				}
+				plugin.hideToolbox(_toolboxes.image);
+			}
+		}
+		this.src.addEventListener('click', eventClick);
 
 		// =============== PUBLIC FUNCIONS =====================
 		this.setup = function(options) {
@@ -325,10 +489,8 @@
 	                    	el = el.parentNode;
 	                    } 
 	                    var b = el.dataset.act;
-	                    widgets[b].call(p,true);
+	                    widgets[b].call(p,tbx);
 	                });
-
-	                
 
                 	li.appendChild(btn);
                 	ul.appendChild(li);
@@ -343,45 +505,97 @@
         	var sel,range,rect,dims;
 
         	sel = this.getSelection();
-        	range = sel.getRangeAt(0).cloneRange();
-        	rect = range.getClientRects()[0];
 
-        	dims = {
-            	width: tbx.current.offsetWidth,
-            	height: tbx.current.offsetHeight
-        	};
+        	if(sel.rangeCount > 0) {
+	        	range = sel.getRangeAt(0).cloneRange();
+	        	rect = range.getClientRects()[0];
 
-        	tbx.current.style.left = ( rect.left - Math.floor(dims.width / 2) + Math.floor(rect.width / 2)) + 'px';
-        	tbx.current.style.top = ( rect.top - 3 - dims.height) + 'px';
+	        	rect = _node.adjustRect(rect);
+
+	        } else if(this.img !== null) {
+	        	// there is an image selected
+	        	rect = this.img.getBoundingClientRect();
+
+	        	rect = _node.adjustRect(rect);
+	        }
+
+	        if(tbx.position === 'top') {
+        		dims = {
+	            	width: tbx.current.offsetWidth,
+	            	height: tbx.current.offsetHeight
+	        	};
+
+	        	tbx.current.style.left = ( rect.left - Math.floor(dims.width / 2) + Math.floor(rect.width / 2)) + 'px';
+	        	tbx.current.style.top = ( rect.top - 3 - dims.height) + 'px';	
+        	} else if(tbx.position === 'left') {
+        		tbx.current.style.left = ( rect.left - 80 ) + 'px';
+        		tbx.current.style.top = ( rect.top ) + 'px';
+        	}
         
         	return tbx.current;
 		};
 
 		this.hideToolbox = function(tbx) {
-			if(tbx.current !== null) {
-				tbx.current.className = 'hidden';
-				return true;
+			if(tbx === null || tbx === undefined) {
+				this.hideToolbox(_toolboxes.image);
+				this.hideToolbox(_toolboxes.selection);
+				this.hideToolbox(_toolboxes.insert);
+			} else {
+				if(tbx && tbx.current && tbx.current !== null && tbx.current !== undefined) {
+					tbx.current.className = 'hidden';
+					return true;
+				}
+				return false;
 			}
-			return false;
 		};
+
 
 		this.setSelection = function() {
 
 			var sel = this.getSelection();
-			var parentEl = null, parentSe = null;
 
-			parentEl = sel.getRangeAt(0).commonAncestorContainer;
-            if (parentEl.nodeType !== 1) {
-                parentEl = parentEl.parentNode;
-            }
+			if(sel.rangeCount === 0) {
+				return false;
+			}
 
-	        parentSe = parentEl;
-	        while(parentSe && parentSe.nodeName && parentSe.nodeName.toLowerCase() !== 'section') {
-	            parentSe = parentSe.parentNode;
-	        }
+			var pe = sel.getRangeAt(0).commonAncestorContainer;
 
-	        this.sel = parentEl;
-	        this.sec = parentSe;
+			while(pe) {
+				if(_node.is(pe,'body') || _node.is(pe,'html')) {
+					// we've gone too far, the user clicked outside the editor
+					// this.sec = null;
+					// this.sel = null;
+					return false;
+				}
+				if(pe.nodeType === 1 && _node.is(pe,'section')) {
+					break;
+				}
+				pe = pe.parentNode;
+			}
+
+			if(pe) {
+
+		        this.sec = pe;
+		        pe = pe.firstChild;
+		        while(pe.nodeType !== 1) {
+		        	pe = pe.nextSibling;
+		        }
+		        this.sel = pe;
+		        return true;
+
+		    } else {
+		    	// this.sel = null;
+		    	// this.sec = null;
+
+		    	return false;
+		    }
+		};
+
+		this.normalize = function() {
+
+			if(this.sel !== null) {
+				_node.normalize(this.sel);
+			}
 		};
 
 		this.verifyEmptyElement = function() {
@@ -404,7 +618,42 @@
 	        if(htm === '<br>' || htm === '<br/>' || htm === '<br />' || htm === '&nbsp;' || htm === '') {
 	            node.innerHTML = null;
 	            node.className = '';
+	            // this.showToolbox(_toolboxes.insert);
 	        }
+		};
+
+		this.uploadFile = function(file, fileIndex, fileCount) {
+
+            var fr = new FileReader();
+            var that = this;
+
+            fr.onloadend = function() {
+                var fig = document.createElement('figure');
+                fig.setAttribute('contenteditable','false');
+                var img = document.createElement('img');
+                img.src = this.result;
+                img.dataset.width = img.width;
+                img.dataset.height = img.height;
+                img.dataset.name = file.name;
+                // var ratio = 100 * img.height / img.width;
+                // img.style.paddingBottom = ratio + '%';
+                fig.appendChild(img);
+                var cap = document.createElement('figcaption');
+                cap.dataset.text = 'Write a caption...';
+                cap.setAttribute('contenteditable', 'true');
+                fig.appendChild(cap);
+                _node.replaceWith(that.sel, fig);
+                that.hideToolbox(_toolboxes.insert);
+            };
+
+            console.info('We got file ' + fileIndex + '/' + fileCount + ': ', file);
+            console.info('File reader: ', fr);
+            fr.readAsDataURL(file);
+		};
+
+		this.selectNone = function() {
+			var sel = window.getSelection();
+			sel.removeAllRanges();
 		};
 		
 	};
@@ -451,12 +700,24 @@
 			}
 			return node;
 		},
+		createText: function(txt) {
+			var node = document.createTextNode(txt);
+			return node;
+		},
+		destroy: function(el) {
+			el.parentElement.removeChild(el);
+		},
 		attr: function(node, name, value) {
 			node.setAttribute(name, value);
 		},
 		is: function(node, name) {
+			// console.info('Match ' + name + ' against node ', node);
 			if(!node || node === null || node === undefined) {
 	            return false;
+	        }
+	        // test only tag elements
+	        if(node.nodeType && node.nodeType !== 1) {
+	        	return false;
 	        }
 	        name = name.toLowerCase();
 	        return (name === node.tagName.toLowerCase());
@@ -497,9 +758,38 @@
 		},
 		toggleClass: function(node, className) {
 			node.classList.toggle(className);
+		},
+		normalize: function(node) {
+			node.normalize();
+		},
+		hasParent: function(node, match) {
+			while(true) {
+				console.info('waling on parent of ', node);
+				if(_node.is(node,match)) {
+					return node;
+				}
+				if(!node) {
+					break;
+				} else if(_node.is(node,'html')) {
+					break;
+				}
+				node = node.parentElement;
+			}
+			return false;
+		},
+		replaceWith:function(oldElement, newElement) {
+			oldElement.parentNode.insertBefore(newElement,oldElement);
+			_node.destroy(oldElement);
+		},
+		adjustRect: function(rect) {
+			return {
+				top: rect.top + window.pageYOffset - document.documentElement.clientTop,
+				left: rect.left + window.pageXOffset - document.documentElement.clientLeft,
+				width: rect.width,
+				height: rect.height
+			};
 		}
 	};
-
 
 	// this will determine if the element currently edited is empty and make it accordingly
 	// (remove the br or empty text nodes)
