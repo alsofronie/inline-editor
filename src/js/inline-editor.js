@@ -16,7 +16,7 @@
 		toolboxes: {
 			selection: [ 'bold','italic','underline','strikethrough','|','h','p','|','align'],
 			insert: ['plus', 'image','video','embed','section'],
-        	image: ['pos','|','sec']
+        	image: ['pos','|','sec','|', 'del']
 		}
 	};
 
@@ -193,17 +193,50 @@
 			position: 'top',
 			widgets: {
 				pos: function(runContext) {
+					var p;
 					if(!runContext) {
 						return { icon: 'image-size' };
 					} else {
 						var s = this.sec;
+						console.info('Running through image sizes with section', s);
 						if(_node.hasClass(s,'wide')) {
 							_node.removeClass(s,'wide');
 							_node.addClass(s,'full');
 						} else if(_node.hasClass(s,'full')) {
 							_node.removeClass(s,'full');
+							_node.addClass(s,'inline-text');
+							// add an empty text besides the image
+
+							p = _node.create('p');
+							p.dataset.text = 'Add your text here';
+							_node.attr(p,'contenteditable','true');
+							var oldp = this.getData(s,'oldp');
+							if(oldp) {
+								p.innerHTML = oldp;
+							}
+							s.appendChild(p);
+
+						} else if(_node.hasClass(s,'inline-text')) {
+							_node.removeClass(s,'inline-text');
+							_node.addClass(s,'inline-text-expand');
+
+							// this should always have the paragraph there, because it will only come from inline-text
+							// which has the paragraph
+
+						} else if(_node.hasClass(s, 'inline-text-expand')) {
+							_node.removeClass(s, 'inline-text-expand');
+							// undo the paragraph thing
+							p = s.getElementsByTagName('p');
+							if(p.length > 0) {
+								p = p[0];
+								_node.normalize(p);
+								this.setData(s, 'oldp', p.innerHTML);	
+							}
+							
+							_node.removeAllChildren(s,'p');
+
 						} else {
-							_node.addClass(s,'wide');
+							_node.addClass(s, 'wide');
 						}
 					}
 				},
@@ -212,6 +245,26 @@
 						return { icon: 'image-big' };
 					} else {
 						console.info('Must make the image very big');
+					}
+				},
+				del: function(runContext) {
+					if(!runContext) {
+						return { icon: 'close' };
+					} else {
+						var selImg = document.getElementsByClassName('img-active');
+
+						// TODO: test if the image is the only pretty thing in the section
+						if(selImg.length === 1 && selImg[0] === this.img) {
+							// === DELETE ===
+							var secToDel = this.sec;
+							this.createNewSection();
+							_node.destroy(secToDel);
+							this.hideToolbox(_toolboxes.image);
+							console.info('Must delete image ', this.img);
+						} else {
+							console.info('No image to delete...');
+						}
+						
 					}
 				}
 			}
@@ -241,6 +294,8 @@
 		this.img = null;				// the active image
 
 		this.settings = null;			// the settings
+
+		this.objData = {};				// the object data, to store things in it related to a node
 
 		// ============= INIT VARIABLES ================
 		
@@ -483,11 +538,11 @@
                 	var p = this;
 	                btn.addEventListener('click', function(event) {
 	                    // _stop(event,true);
-	                    console.info('event target is  now', event.srcElement);
 	                    var el = ( event.srcElement || event.target );
 	                    while(!_node.is(el,'button')) {
 	                    	el = el.parentNode;
 	                    } 
+	                    console.info('event target is  now', el);
 	                    var b = el.dataset.act;
 	                    widgets[b].call(p,tbx);
 	                });
@@ -577,7 +632,7 @@
 
 		        this.sec = pe;
 		        pe = pe.firstChild;
-		        while(pe.nodeType !== 1) {
+		        while(pe.nodeType !== 1 || _node.is(pe,'figure')) {
 		        	pe = pe.nextSibling;
 		        }
 		        this.sel = pe;
@@ -654,6 +709,30 @@
 		this.selectNone = function() {
 			var sel = window.getSelection();
 			sel.removeAllRanges();
+		};
+
+		this.getData = function(node, name) {
+			var ref = node.dataset.iedoc;
+
+			if(ref && this.objData[ref] && this.objData[ref][name]) {
+				return this.objData[ref][name];
+			} else {
+				return null;
+			}
+		};
+
+		this.setData = function(node, name, anything) {
+			var ref = node.dataset.iedoc;
+			if(!ref) {
+				ref = 'ied' + Math.floor(100000 * Math.random());
+				node.dataset.iedoc = ref;
+			}
+			
+			if(!this.objData[ref]) {
+				this.objData[ref] = {};
+			}
+			this.objData[ref][name] = anything;
+			return true;
 		};
 		
 	};
@@ -776,6 +855,12 @@
 				node = node.parentElement;
 			}
 			return false;
+		},
+		removeAllChildren: function(node, tag) {
+			while(node.getElementsByTagName(tag).length > 0) {
+				var e = node.getElementsByTagName(tag)[0];
+				_node.destroy(e);
+			}
 		},
 		replaceWith:function(oldElement, newElement) {
 			oldElement.parentNode.insertBefore(newElement,oldElement);

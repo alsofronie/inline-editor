@@ -7,7 +7,6 @@
 
 @ied-column-width:700px;
 
-
 @ied-color:rgba(0,0,0,.8);
 
 
@@ -39,12 +38,15 @@ body,td,input,select {
 		section.col {
 			width:@ied-column-width;
 			margin:0 auto;
+			padding:@ied-margin-md 0;
 
 			figure {
 				position:relative;
-				margin:0;
-				padding:0;
 				max-width:100%;
+				clear: both;
+				box-sizing: border-box;
+				outline:none;
+
 				figcaption {
 					position:absolute;
 					left: -172px;
@@ -101,10 +103,54 @@ body,td,input,select {
 				}
 			}
 
+			&.inline-text, &.inline-text-expand {
+				// aici nu merge cu float left la sectiune, trebuie numai la imagine, iar in cadrul <figure> mai trebuie un <p>
+				& > figure {
+					float:left;	
+					margin: 0 30px 10px 0;
+					width:50%;
+					max-width:50%;
+					& > img {
+						width:100%;
+					}
+
+					& > figcaption {
+						display:block;
+						// position:relative;
+					}
+				}
+
+			}
+
+			&.inline-text-expand {
+				& > figure {
+					position:relative;
+					margin-left: -160px;
+					width:75%;
+					max-width:75%;
+					& > figcaption {
+						left:auto;
+						width:auto;
+						top:auto;
+						text-align:center;
+						position:relative;
+						&:after {
+							border:none;
+						}
+					}
+				}
+			}
+
+			h1,h2,h3,h4,h5,h6,p,figure {
+				margin:0;
+				padding:0;
+			}
+
 			h1 {
 				font-family: 'Roboto Slab', cursive;
 				font-size:70px;
 				line-height:1;
+				padding-bottom:@ied-margin-md;
 			}
 
 			h2 {
@@ -115,6 +161,7 @@ body,td,input,select {
 				b {
 					font-weight:700;
 				}
+				padding-bottom:@ied-margin-md;
 			}
 			h3 {
 				font-family: 'PT Serif', cursive;
@@ -124,17 +171,22 @@ body,td,input,select {
 				b {
 					font-weight:700;
 				}
+				padding-bottom:@ied-margin-sm;
 			}
 
 			h4 {
 				font-family:'Roboto Light';
 				font-weight:300;
 				line-height:1.1;
+				padding-bottom:@ied-margin-sm;
+			}
+
+			h5,h6 {
+				padding-bottom:@ied-margin-sm;
 			}
 
 			p {
 				font-family:'PT Serif';
-				margin-bottom:@ied-margin-lg;
 			}
 
 			.text-left {
