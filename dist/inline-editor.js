@@ -1,4 +1,4 @@
-/*! Inline Editor - v0.1.0 -  * 2015-08-17
+/*! Inline Editor - v0.1.0 -  * 2015-08-18
  * * https://github.com/alsofronie/inline-editor
  * Copyright (c) 2015 Alex Sofronie; * Licensed MIT */ 
 ;(function(w,d,undefined) {
@@ -330,7 +330,7 @@
 				            range = range.cloneRange();
 				            range.setStartAfter(br);
 				            range.setEndAfter(br);
-				            spc = _node.createText('*');
+				            spc = _node.createText('...');
 				            range.insertNode(spc);
 				            range.selectNode(spc);
 				            sel.removeAllRanges();
@@ -763,7 +763,7 @@
 		},
 		hasParent: function(node, match) {
 			while(true) {
-				console.info('waling on parent of ', node);
+				console.info('waling on parent of ', node); 
 				if(_node.is(node,match)) {
 					return node;
 				}

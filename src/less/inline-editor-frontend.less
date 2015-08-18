@@ -45,11 +45,28 @@ body,td,input,select {
 			}
 
 			&.wide {
-				width:(@ied-column-width + 120);
+				width:(@ied-column-width + 200);
 			}
 
 			&.full {
 				width:100%;
+			}
+
+			&.wide, &.full figure {
+				figcaption {
+					position:relative;
+					left:auto;
+					width:auto;
+					top:auto;
+					text-align:center;
+					&:after {
+						border:none;
+					}
+				}
+				img {
+					width:100%;
+					height:auto;
+				}
 			}
 		}
 	}
@@ -59,6 +76,7 @@ body,td,input,select {
 		font-size:70px;
 		line-height:1;
 	}
+
 	h2 {
 		font-family: 'Roboto Slab','Lucida Grande';
 		font-size: 60px;
@@ -136,26 +154,6 @@ figure {
 	img {
 		max-width:100%;
 		height:auto;
-	}
-}
-
-section.wide, section.full {
-
-	figure {
-		figcaption {
-			position:relative;
-			left:auto;
-			width:auto;
-			top:auto;
-			text-align:center;
-			&:after {
-				border:none;
-			}
-		}
-		img {
-			width:100%;
-			height:auto;
-		}
 	}
 }
 

@@ -331,7 +331,7 @@
 				            range = range.cloneRange();
 				            range.setStartAfter(br);
 				            range.setEndAfter(br);
-				            spc = _node.createText('*');
+				            spc = _node.createText('...');
 				            range.insertNode(spc);
 				            range.selectNode(spc);
 				            sel.removeAllRanges();
@@ -764,7 +764,7 @@
 		},
 		hasParent: function(node, match) {
 			while(true) {
-				console.info('waling on parent of ', node);
+				console.info('waling on parent of ', node); 
 				if(_node.is(node,match)) {
 					return node;
 				}

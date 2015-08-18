@@ -1,5 +1,5 @@
 @import url(http://fonts.googleapis.com/css?family=Patua+One|Roboto:300|Roboto+Slab:400,700|PT+Serif:400,700,400italic,700italic);
-/*! Inline Editor - v0.1.0 -  * 2015-08-17
+/*! Inline Editor - v0.1.0 -  * 2015-08-18
  * * https://github.com/alsofronie/inline-editor
  * Copyright (c) 2015 Alex Sofronie; * Licensed MIT */
 body,
@@ -32,10 +32,27 @@ select {
   padding-bottom: attr(data-dratio);
 }
 .ied-content > .ied-article section.col.wide {
-  width: 820px;
+  width: 900px;
 }
 .ied-content > .ied-article section.col.full {
   width: 100%;
+}
+.ied-content > .ied-article section.col.wide figcaption,
+.ied-content > .ied-article section.col.full figure figcaption {
+  position: relative;
+  left: auto;
+  width: auto;
+  top: auto;
+  text-align: center;
+}
+.ied-content > .ied-article section.col.wide figcaption:after,
+.ied-content > .ied-article section.col.full figure figcaption:after {
+  border: none;
+}
+.ied-content > .ied-article section.col.wide img,
+.ied-content > .ied-article section.col.full figure img {
+  width: 100%;
+  height: auto;
 }
 .ied-content h1 {
   font-family: 'Roboto Slab', cursive;
@@ -113,23 +130,6 @@ figure figcaption:after {
 }
 figure img {
   max-width: 100%;
-  height: auto;
-}
-section.wide figure figcaption,
-section.full figure figcaption {
-  position: relative;
-  left: auto;
-  width: auto;
-  top: auto;
-  text-align: center;
-}
-section.wide figure figcaption:after,
-section.full figure figcaption:after {
-  border: none;
-}
-section.wide figure img,
-section.full figure img {
-  width: 100%;
   height: auto;
 }
 .text-left {
