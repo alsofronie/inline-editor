@@ -632,7 +632,7 @@
 
 		        this.sec = pe;
 		        pe = pe.firstChild;
-		        while(pe.nodeType !== 1 || _node.is(pe,'figure')) {
+		        while(pe && pe.nodeType !== 1 || _node.is(pe,'figure')) {
 		        	pe = pe.nextSibling;
 		        }
 		        this.sel = pe;
