@@ -136,8 +136,15 @@
 					if(!runContext) {
 						return { icon: 'image' };
 					} else {
-						var that = this;
 
+						if(!w.FileReader) {
+							alert('Your browser does not support FileReader so you cannot upload files this way. Please use a modern browser such as Google Chrome or Mozilla Firefox, updated to their latest versions!');
+							return false;
+						}
+
+						// this.hideToolbox()
+
+						var that = this;
 	                    var inp = document.createElement('input');
 	                    
 	                    inp.type = 'file';
@@ -148,18 +155,50 @@
 	                    inp.style.top = '-9999px';
 
 	                    inp.onchange = function() {
-	                        var files = this.files;
-	                        for (var i = 0; i < files.length; i++) {
-	                            that.uploadFile(files[i],i,files.length);
-	                        }
-	                    };
+	                    	var files,imgs,fr,i,filesToLoad,filesLoaded;
+	                        files = this.files;
+	                        imgs = [];
+	                        console.info('Uploading files ', this.files);
 
-	                    document.body.appendChild(inp);
+	                        filesToLoad = files.length;
+	                        filesLoaded = 0;
+	                        
+	                        for (i = 0; i < filesToLoad; i++) {
+	                        	// jshint loopfunc: true
+	                        	console.info('File index is', i);
+	                        	fr = new FileReader();
+		                    	fr.token = i;
+		                    	fr.fname = files[i].name;
+		                    	fr.onloadend = function() {
+		                    		var img = document.createElement('img');
+		                    		img.src = this.result;
+		                    		img.dataset.width = img.width;
+		                    		img.dataset.height = img.height;
+		                    		img.dataset.name = this.fname;
+		                    		img.setAttribute('style','max-width: ' + img.width + 'px;max-height: ' + img.height + 'px');
+		                    		imgs[this.token] = img;
+		                    		filesLoaded += 1;
+		                    	};
+		                    	fr.readAsDataURL(files[i]);
+                        	}
+
+                        	var f = function() {
+                        		if(filesToLoad === filesLoaded) {
+                        			that.insertFigure(imgs);
+                        		} else {
+                        			setTimeout(f,1);
+                        		}
+                        	};
+
+                        	f();
+                        };
+
+                        document.body.appendChild(inp);
 
 	                    inp.focus();
 	                    inp.click();
-					}
-				},
+                    }
+                },
 				video: function(runContext) {
 					if(!runContext) {
 						return { icon: 'video' };
@@ -252,15 +291,24 @@
 						return { icon: 'close' };
 					} else {
 						var selImg = document.getElementsByClassName('img-active');
-
-						// TODO: test if the image is the only pretty thing in the section
+						var imgsel;
 						if(selImg.length === 1 && selImg[0] === this.img) {
-							// === DELETE ===
-							var secToDel = this.sec;
-							this.createNewSection();
-							_node.destroy(secToDel);
+							// test if the image is the only pretty thing in the section
+							imgsel = selImg[0];
+							var fig = imgsel.parentElement;
+							var childCount = fig.children.length;
+							// remember, we have the fig caption also
+							_node.destroy(imgsel);
+							if(childCount === 2) {
+								// === DELETE ===
+								var secToDel = this.sec;
+								this.createNewSection();
+								_node.destroy(secToDel);
+							}
+
+							this.updateFigureAppearance(); 
+
 							this.hideToolbox(_toolboxes.image);
-							console.info('Must delete image ', this.img);
 						} else {
 							console.info('No image to delete...');
 						}
@@ -404,8 +452,15 @@
 					plugin.createNewSection();
 					
 				}
-				
+			} else if(event.keyCode === 8 || event.keyCode === 46) {
+				var selimgs = document.getElementsByClassName('img-active');
+				if(selimgs.length > 0 && selimgs[0] === plugin.img) {
+					_stop(event, true);	
+					_toolboxes.image.widgets.del.apply(plugin,[true]);
+					return false;
+				}				
 			} else {
+
 				console.info('need to hide toolboxes');
 				plugin.hideToolbox(_toolboxes.insert);
 			}
@@ -422,28 +477,25 @@
             }
 		}
 		this.src.addEventListener('keyup', eventKeyUp);
-
+		
 
 		// click event (used to select non-editable elements)
 		function eventClick(event) {
 			event = event ? event: w.event;
 
 			var el = event.target;
+
+			// plugin.unselectImages();
+
 			if(_node.is(el,'img') && _node.is(el.parentElement, 'figure')) {
-				_node.addClass(el,'img-active');
 				plugin.selectNone();
 				plugin.hideToolbox(_toolboxes.insert);
 				plugin.hideToolbox(_toolboxes.selection);
 				plugin.img = el;
 				plugin.sec = _node.hasParent(el,'section');
+				_node.addClass(el,'img-active');
 				plugin.showToolbox(_toolboxes.image);
 			} else {
-				var a = document.getElementsByClassName('img-active');
-				for(var b in a) {
-					if(a[b] && a[b].classList && _node.is(a[b],'img')) {
-						_node.removeClass(a[b],'img-active');
-					}
-				}
 				plugin.hideToolbox(_toolboxes.image);
 			}
 		}
@@ -595,12 +647,25 @@
 				this.hideToolbox(_toolboxes.image);
 				this.hideToolbox(_toolboxes.selection);
 				this.hideToolbox(_toolboxes.insert);
+				this.unselectImages();
 			} else {
 				if(tbx && tbx.current && tbx.current !== null && tbx.current !== undefined) {
 					tbx.current.className = 'hidden';
+					if(tbx.name === 'image') {
+						this.unselectImages();
+					}
 					return true;
 				}
 				return false;
+			}
+		};
+
+		this.unselectImages = function() {
+			var a = document.getElementsByClassName('img-active');
+			for(var b in a) {
+				if(a[b] && a[b].classList && _node.is(a[b],'img')) {
+					_node.removeClass(a[b],'img-active');
+				}
 			}
 		};
 
@@ -661,6 +726,10 @@
         	var node = pe;
         	console.info('We need to check the node ', node);
 
+        	if(!node) {
+        		return true;
+        	}
+
         	if(_node.is(node,'figure')) {
         		// we need to check the figcaption not the figure
 	            // maybe we have more than one image?
@@ -677,38 +746,67 @@
 	        }
 		};
 
-		this.uploadFile = function(file, fileIndex, fileCount) {
+		this.insertFigure = function(images) {
+			var fig,img,i,cap;
+			fig = document.createElement('figure');
+			fig.setAttribute('contenteditable', false);
+			for(i=0;i<images.length;i++) {
+				img = images[i];
+				if(img !== undefined && img) {
+					fig.appendChild(img);
+				} else {
+					console.info('received undefined in image array');
+				}
+			}
+			cap = document.createElement('figcaption');
+            cap.dataset.text = 'Write a caption...';
+            cap.setAttribute('contenteditable', 'true');
+            fig.appendChild(cap);
+            _node.replaceWith(this.sel, fig);
+            this.hideToolbox(_toolboxes.insert);
+            this.updateFigureAppearance();
+		};
 
-            var fr = new FileReader();
-            var that = this;
+		this.updateFigureAppearance = function() {
+			if(this.sec.childNodes.length === 0) {
+				console.info('We have a childless sec ???');
+				return false;
+			}
+			var fig = this.sec.childNodes[0];
+			if(!_node.is(fig,'figure')) {
+				console.info('We are not with figure');
+				return false;
+			}
+			var imgs = fig.getElementsByTagName('img');
+			_node.removeClass(this.sec,'multiple-odd');
+			_node.removeClass(this.sec,'multiple-even');
+			if(imgs.length > 1) {
+				if(imgs.length % 2 === 0) {
+					_node.addClass(this.sec,'multiple-even');
+				} else {
+					_node.addClass(this.sec,'multiple-odd');
+				}
+			}
 
-            fr.onloadend = function() {
-                var fig = document.createElement('figure');
-                fig.setAttribute('contenteditable','false');
-                var img = document.createElement('img');
-                img.src = this.result;
-                img.dataset.width = img.width;
-                img.dataset.height = img.height;
-                img.dataset.name = file.name;
-                // var ratio = 100 * img.height / img.width;
-                // img.style.paddingBottom = ratio + '%';
-                fig.appendChild(img);
-                var cap = document.createElement('figcaption');
-                cap.dataset.text = 'Write a caption...';
-                cap.setAttribute('contenteditable', 'true');
-                fig.appendChild(cap);
-                _node.replaceWith(that.sel, fig);
-                that.hideToolbox(_toolboxes.insert);
-            };
+			/*
+			 
+			 We must make images two by two like in medium
+			 Step 0: group the images by two with regard of the last one (eliminate if odd).
+			 		 All the following steps are applied for each pair of two images in a row
+			 Step 1: Determine the lowest height and make the highest image the same height as the other
+			 Step 2: Measure the width of the two images together with separator: 10px
+			 Step 3: What is the ratio we need to apply to the block in order to make the block
+			 		 the same width as the width of the container
+			 Step 4: Calculate the width of each of the two images so they will fill the container
+			 		 with height:auto.
 
-            console.info('We got file ' + fileIndex + '/' + fileCount + ': ', file);
-            console.info('File reader: ', fr);
-            fr.readAsDataURL(file);
+			 */
 		};
 
 		this.selectNone = function() {
 			var sel = window.getSelection();
 			sel.removeAllRanges();
+			this.unselectImages();
 		};
 
 		this.getData = function(node, name) {
@@ -768,6 +866,8 @@
         if(preventDefault === true) {
         	event.preventDefault();
         }
+
+        return false;
 	}
 
 	// just some node operations (DOM)
