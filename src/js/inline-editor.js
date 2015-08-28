@@ -306,6 +306,7 @@
 								_node.destroy(secToDel);
 							}
 
+
 							this.updateFigureAppearance(); 
 
 							this.hideToolbox(_toolboxes.image);
@@ -786,21 +787,85 @@
 				} else {
 					_node.addClass(this.sec,'multiple-odd');
 				}
+				_node.addClass(this.sec, 'wide');
+
+				/*
+				 We must make images two by two like in medium
+				 Step 0: group the images by two with regard of the last one (eliminate if odd).
+				 		 All the following steps are applied for each pair of two images in a row
+				 Step 1: Determine the lowest height and make the highest image the same height as the other
+				 Step 2: Measure the width of the two images together with separator: 10px
+				 Step 3: What is the ratio we need to apply to the block in order to make the block
+				 		 the same width as the width of the container
+				 Step 4: Calculate the width of each of the two images so they will fill the container
+				 		 with height:auto.
+				 */
+				var i,img1,img2;
+				var sectionWidth = _node.getWidth(this.sec);
+				var imageGroups = Math.floor(imgs.length / 2);
+
+				var SEPARATOR = 10;
+
+				for(i=0;i<imageGroups;i++) {
+					img1 = imgs[2*i];
+					img2 = imgs[2*i+1];
+
+					var w1 = img1.dataset.width;
+					var h1 = img1.dataset.height;
+					var w2 = img2.dataset.width;
+					var h2 = img2.dataset.height;
+
+					console.info('1. Images: (' + w1 + 'x' + h1 + '), (' + w2 + 'x' + h2 + ')');
+
+					// calculate the width and the height of each image in order to make them equal height
+					var minHeight = Math.min(h1,h2);
+					
+					console.info('2. Minimum height: ' + minHeight);
+					
+					// one of these is 1
+					var ratioImg1 = img1.dataset.height / minHeight;
+					var ratioImg2 = img2.dataset.height / minHeight;
+					
+					console.info('3. Ratios: ' + ratioImg1 + ', ' + ratioImg2);
+					
+					// resize big
+					var resizedBigImg1Width = img1.dataset.width / ratioImg1;
+					var resizedBigImg1Height = img1.dataset.height / ratioImg1;
+					var resizedBigImg2Width = img2.dataset.width / ratioImg2;
+					var resizedBigImg2Height = img2.dataset.height / ratioImg2;
+					
+					console.info('4. Resized big: (' + resizedBigImg1Width + 'x' + resizedBigImg1Height + '), (' + resizedBigImg2Width + 'x' + resizedBigImg2Height + ')');
+					
+					// the sum of the resizedWidth must be equal to the sectionWidth
+					// he have to make it bigger in order to accomodate the big pictures
+					var rSeparator = SEPARATOR * (resizedBigImg1Width + resizedBigImg2Width) / sectionWidth;
+					var ratioWidth = (resizedBigImg1Width + resizedBigImg2Width + rSeparator) / sectionWidth;
+					var finalImg1Width = resizedBigImg1Width / ratioWidth;
+					var finalImg2Width = resizedBigImg2Width / ratioWidth; //  + SEPARATOR;
+					
+					var finalImg1Height = resizedBigImg1Height / ratioWidth;
+					var finalImg2Height = resizedBigImg2Height / ratioWidth;
+
+					var nSeparator = sectionWidth - (finalImg1Width + finalImg2Width);
+
+					console.info('4. Resized small: (' + finalImg1Width + 'x' + finalImg1Height + '), (' + finalImg2Width + 'x' + finalImg2Height + ')');
+
+					var finalPercentImg1Width = (100 * finalImg1Width / sectionWidth);
+					var finalPercentImg2WidthDiff = 100 - finalPercentImg1Width;
+					var finalPercentImg2WidthCalc = (100 * finalImg2Width / sectionWidth);
+					console.info('5. Percent calculated: ' + finalPercentImg2WidthCalc + ', Percent by diff: ', finalPercentImg2WidthDiff);
+					// var finalPercentImg1Width = (100 * finalImg1Width / sectionWidth) - percentSeparator;
+					// var finalPercentImg2Width = (100 * finalImg2Width / sectionWidth);
+					_node.attr(img1, 'style','width: ' + finalPercentImg1Width + '%');
+					_node.attr(img2, 'style','margin-left:' + nSeparator + 'px; width: ' + finalPercentImg2WidthCalc + '%');
+				}
 			}
 
-			/*
-			 
-			 We must make images two by two like in medium
-			 Step 0: group the images by two with regard of the last one (eliminate if odd).
-			 		 All the following steps are applied for each pair of two images in a row
-			 Step 1: Determine the lowest height and make the highest image the same height as the other
-			 Step 2: Measure the width of the two images together with separator: 10px
-			 Step 3: What is the ratio we need to apply to the block in order to make the block
-			 		 the same width as the width of the container
-			 Step 4: Calculate the width of each of the two images so they will fill the container
-			 		 with height:auto.
-
-			 */
+			if(_node.hasClass(this.sec,'multiple-odd') || this.sec.class === '' && imgs.length > 0) {
+				var lastImg = imgs[imgs.length-1];
+				console.info('We have an odd image: ', lastImg);
+				_node.attr(lastImg, 'style','max-width:'+lastImg.dataset.width+'px;max-height:'+lastImg.dataset.height+'px');
+			}
 		};
 
 		this.selectNone = function() {
@@ -943,7 +1008,7 @@
 		},
 		hasParent: function(node, match) {
 			while(true) {
-				console.info('waling on parent of ', node); 
+				// console.info('walking on parent of ', node); 
 				if(_node.is(node,match)) {
 					return node;
 				}
@@ -973,6 +1038,25 @@
 				width: rect.width,
 				height: rect.height
 			};
+		},
+		getWidth: function(el) {
+			return el.offsetWidth;
+		},
+		getHeight: function(el) {
+			return el.offsetHeight;
+		},
+		lastChildOf: function(el,nodeType) {
+			if(el.children.length > 0) {
+				var ret = el.children[0];
+				for(var i=0;i<el.children.length;i++) {
+					if(_node.is(el.children[i],nodeType)) {
+						ret = el.children[i];
+					}
+				}
+				return ret;
+			} else {
+				return null;
+			}
 		}
 	};
 
