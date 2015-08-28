@@ -815,6 +815,8 @@
 					var w2 = img2.dataset.width;
 					var h2 = img2.dataset.height;
 
+
+
 					console.info('1. Images: (' + w1 + 'x' + h1 + '), (' + w2 + 'x' + h2 + ')');
 
 					// calculate the width and the height of each image in order to make them equal height
@@ -856,12 +858,13 @@
 					console.info('5. Percent calculated: ' + finalPercentImg2WidthCalc + ', Percent by diff: ', finalPercentImg2WidthDiff);
 					// var finalPercentImg1Width = (100 * finalImg1Width / sectionWidth) - percentSeparator;
 					// var finalPercentImg2Width = (100 * finalImg2Width / sectionWidth);
+
 					_node.attr(img1, 'style','width: ' + finalPercentImg1Width + '%');
 					_node.attr(img2, 'style','margin-left:' + nSeparator + 'px; width: ' + finalPercentImg2WidthCalc + '%');
 				}
 			}
 
-			if(_node.hasClass(this.sec,'multiple-odd') || this.sec.class === '' && imgs.length > 0) {
+			if(!_node.hasClass(this.sec,'multiple-even') && imgs.length > 0) {
 				var lastImg = imgs[imgs.length-1];
 				console.info('We have an odd image: ', lastImg);
 				_node.attr(lastImg, 'style','max-width:'+lastImg.dataset.width+'px;max-height:'+lastImg.dataset.height+'px');
