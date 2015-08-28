@@ -815,52 +815,43 @@
 					var w2 = img2.dataset.width;
 					var h2 = img2.dataset.height;
 
+					var mh = Math.min(h1,h2);
+					var rs = SEPARATOR * ((w1 / (h1 / mh)) + (w2 / (h2 / mh))) / sectionWidth;
+					var pw1 = (100 * ((w1 / (h1 / mh)) / (((w1 / (h1 / mh)) + (w2 / (h2 / mh)) + rs) / sectionWidth)) / sectionWidth);
+					var pw2 = (100 * ((w2 / (h2 / mh)) / (((w1 / (h1 / mh)) + (w2 / (h2 / mh)) + rs) / sectionWidth)) / sectionWidth);
+					var ns = sectionWidth - ((((w1 / (h1 / mh)) / (((w1 / (h1 / mh)) + (w2 / (h2 / mh)) + rs) / sectionWidth))) + (((w2 / (h2 / mh)) / (((w1 / (h1 / mh)) + (w2 / (h2 / mh)) + rs) / sectionWidth))));
 
-
-					console.info('1. Images: (' + w1 + 'x' + h1 + '), (' + w2 + 'x' + h2 + ')');
-
+					// console.info('1. Images: (' + w1 + 'x' + h1 + '), (' + w2 + 'x' + h2 + ')');
 					// calculate the width and the height of each image in order to make them equal height
-					var minHeight = Math.min(h1,h2);
-					
-					console.info('2. Minimum height: ' + minHeight);
-					
+					// console.info('2. Minimum height: ' + minHeight);
 					// one of these is 1
-					var ratioImg1 = img1.dataset.height / minHeight;
-					var ratioImg2 = img2.dataset.height / minHeight;
-					
-					console.info('3. Ratios: ' + ratioImg1 + ', ' + ratioImg2);
-					
+					// var ratioImg1 = h1 / mh;
+					// var ratioImg2 = h2 / mh;
+					// console.info('3. Ratios: ' + ratioImg1 + ', ' + ratioImg2);
 					// resize big
-					var resizedBigImg1Width = img1.dataset.width / ratioImg1;
-					var resizedBigImg1Height = img1.dataset.height / ratioImg1;
-					var resizedBigImg2Width = img2.dataset.width / ratioImg2;
-					var resizedBigImg2Height = img2.dataset.height / ratioImg2;
-					
-					console.info('4. Resized big: (' + resizedBigImg1Width + 'x' + resizedBigImg1Height + '), (' + resizedBigImg2Width + 'x' + resizedBigImg2Height + ')');
-					
+					// var resizedBigImg1Width = w1 / ratioImg1;
+					// var resizedBigImg1Height = h1 / ratioImg1;
+					// var resizedBigImg2Width = w2 / ratioImg2;
+					// var resizedBigImg2Height = h2 / ratioImg2;
+					// console.info('4. Resized big: (' + resizedBigImg1Width + 'x' + resizedBigImg1Height + '), (' + resizedBigImg2Width + 'x' + resizedBigImg2Height + ')');
 					// the sum of the resizedWidth must be equal to the sectionWidth
 					// he have to make it bigger in order to accomodate the big pictures
-					var rSeparator = SEPARATOR * (resizedBigImg1Width + resizedBigImg2Width) / sectionWidth;
-					var ratioWidth = (resizedBigImg1Width + resizedBigImg2Width + rSeparator) / sectionWidth;
-					var finalImg1Width = resizedBigImg1Width / ratioWidth;
-					var finalImg2Width = resizedBigImg2Width / ratioWidth; //  + SEPARATOR;
-					
-					var finalImg1Height = resizedBigImg1Height / ratioWidth;
-					var finalImg2Height = resizedBigImg2Height / ratioWidth;
-
-					var nSeparator = sectionWidth - (finalImg1Width + finalImg2Width);
-
-					console.info('4. Resized small: (' + finalImg1Width + 'x' + finalImg1Height + '), (' + finalImg2Width + 'x' + finalImg2Height + ')');
-
-					var finalPercentImg1Width = (100 * finalImg1Width / sectionWidth);
-					var finalPercentImg2WidthDiff = 100 - finalPercentImg1Width;
-					var finalPercentImg2WidthCalc = (100 * finalImg2Width / sectionWidth);
-					console.info('5. Percent calculated: ' + finalPercentImg2WidthCalc + ', Percent by diff: ', finalPercentImg2WidthDiff);
+					// var ratioWidth = (((w1 / (h1 / mh)) + (w2 / (h2 / mh)) + rSeparator) / sectionWidth);
+					// var finalImg1Width = resizedBigImg1Width / ratioWidth;
+					// var finalImg2Width = resizedBigImg2Width / ratioWidth; //  + SEPARATOR;
+					// var finalImg1Height = resizedBigImg1Height / ratioWidth;
+					// var finalImg2Height = resizedBigImg2Height / ratioWidth;
+					// var nSeparator = sectionWidth - (finalImg1Width + finalImg2Width);
+					// console.info('4. Resized small: (' + finalImg1Width + 'x' + finalImg1Height + '), (' + finalImg2Width + 'x' + finalImg2Height + ')');
+					// var finalPercentImg1Width = (100 * finalImg1Width / sectionWidth);
+					// var finalPercentImg2WidthDiff = 100 - finalPercentImg1Width;
+					// var finalPercentImg2WidthCalc = (100 * finalImg2Width / sectionWidth);
+					// console.info('5. Percent calculated: ' + finalPercentImg2WidthCalc + ', Percent by diff: ', finalPercentImg2WidthDiff);
 					// var finalPercentImg1Width = (100 * finalImg1Width / sectionWidth) - percentSeparator;
 					// var finalPercentImg2Width = (100 * finalImg2Width / sectionWidth);
 
-					_node.attr(img1, 'style','width: ' + finalPercentImg1Width + '%');
-					_node.attr(img2, 'style','margin-left:' + nSeparator + 'px; width: ' + finalPercentImg2WidthCalc + '%');
+					_node.attr(img1, 'style','width: ' + pw1 + '%');
+					_node.attr(img2, 'style','margin-left:' + ns + 'px; width: ' + pw2 + '%');
 				}
 			}
 
