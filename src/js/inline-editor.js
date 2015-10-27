@@ -175,7 +175,7 @@
 		                    		img.dataset.width = img.width;
 		                    		img.dataset.height = img.height;
 		                    		img.dataset.name = this.fname;
-		                    		img.setAttribute('style','max-width: ' + img.width + 'px;max-height: ' + img.height + 'px');
+		                    		// img.setAttribute('style','max-width: ' + img.width + 'px;max-height: ' + img.height + 'px');
 		                    		imgs[this.token] = img;
 		                    		filesLoaded += 1;
 		                    	};
@@ -501,6 +501,23 @@
 			}
 		}
 		this.src.addEventListener('click', eventClick);
+
+		
+		function eventPaste(event) {
+			event.preventDefault();
+			var data = event.clipboardData.getData('text/plain');
+			console.info('pasted data is ', data);
+			// the target
+			var trg = event.target;
+			if(_node.is(trg,'p') && _node.is(trg.parentElement,'section')) {
+				trg.innerHTML = data;
+			}
+			return false;
+			
+		}
+		
+
+		this.src.addEventListener('paste', eventPaste);
 
 		// =============== PUBLIC FUNCIONS =====================
 		this.setup = function(options) {
@@ -858,7 +875,7 @@
 			if(!_node.hasClass(this.sec,'multiple-even') && imgs.length > 0) {
 				var lastImg = imgs[imgs.length-1];
 				console.info('We have an odd image: ', lastImg);
-				_node.attr(lastImg, 'style','max-width:'+lastImg.dataset.width+'px;max-height:'+lastImg.dataset.height+'px');
+				// _node.attr(lastImg, 'style','max-width:'+lastImg.dataset.width+'px;max-height:'+lastImg.dataset.height+'px');
 			}
 		};
 
