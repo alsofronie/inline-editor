@@ -1,5 +1,7 @@
 # Inline Editor
 
+I've started a jquery editor that will replace this [here](https://github.com/alsofronie/meditor).
+
 A Medium like inline editor
 
 ## Getting Started
